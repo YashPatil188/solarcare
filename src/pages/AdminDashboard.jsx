@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { Users, ClipboardList, CheckCircle, Clock, UserPlus, Search, AlertCircle, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,6 +12,7 @@ import { ticketService } from '../services/ticketService';
 import { supabase } from '../lib/supabase';
 
 export default function AdminDashboard() {
+    const { t } = useTranslation(); // [NEW]
     const { signOut } = useAuth();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState('tickets');
@@ -19,6 +21,7 @@ export default function AdminDashboard() {
     const [tickets, setTickets] = useState([]);
     const [pendingCustomers, setPendingCustomers] = useState([]);
     const [activeCustomers, setActiveCustomers] = useState([]);
+    const [allProfiles, setAllProfiles] = useState([]); // [NEW] For Role Management
     const [technicians, setTechnicians] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, active: 0, completed: 0 });
@@ -44,11 +47,14 @@ export default function AdminDashboard() {
             setActiveCustomers(allCustomers.filter(c => c.status === 'verified' || c.status === 'active'));
 
             // 3. Fetch Technicians direct (or we could make a profileService)
-            const { data: techsData } = await supabase
+            // [MODIFIED] Fetch ALL profiles for Role Management
+            const { data: profilesData } = await supabase
                 .from('profiles')
                 .select('*')
-                .eq('role', 'technician');
-            setTechnicians(techsData || []);
+                .order('created_at', { ascending: false });
+
+            setAllProfiles(profilesData || []);
+            setTechnicians(profilesData?.filter(p => p.role === 'technician') || []);
 
             // 4. Calculate Stats
             const total = ticketsData?.length || 0;
@@ -125,11 +131,28 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleUpdateRole = async (userId, newRole) => {
+        if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ role: newRole })
+                .eq('id', userId);
+
+            if (error) throw error;
+            toast.success(`Role updated to ${newRole}`);
+            fetchData();
+        } catch (error) {
+            console.error('Error updating role:', error);
+            toast.error('Failed to update role');
+        }
+    };
+
     return (
         <div className="space-y-6 pb-20 bg-gray-50 min-h-screen">
             <Header
-                title="Admin Panel"
-                rightAction={<Button variant="ghost" size="sm" onClick={signOut} className="text-red-500">Log Out</Button>}
+                title={t('admin_panel')}
+                rightAction={<Button variant="ghost" size="sm" onClick={signOut} className="text-red-500">{t('logout')}</Button>}
             />
 
             <div className="px-4 space-y-6">
@@ -138,26 +161,26 @@ export default function AdminDashboard() {
                     <Card className="bg-blue-50 border-blue-100">
                         <CardContent className="p-3 text-center">
                             <div className="text-2xl font-bold text-blue-700">{stats.total}</div>
-                            <div className="text-[10px] text-blue-600 font-medium">Total Tickets</div>
+                            <div className="text-[10px] text-blue-600 font-medium">{t('total_tickets')}</div>
                         </CardContent>
                     </Card>
                     <Card className="bg-yellow-50 border-yellow-100">
                         <CardContent className="p-3 text-center">
                             <div className="text-2xl font-bold text-yellow-700">{pendingCustomers.length}</div>
-                            <div className="text-[10px] text-yellow-600 font-medium">Pending Verifications</div>
+                            <div className="text-[10px] text-yellow-600 font-medium">{t('pending_verifications')}</div>
                         </CardContent>
                     </Card>
                     <Card className="bg-green-50 border-green-100">
                         <CardContent className="p-3 text-center">
                             <div className="text-2xl font-bold text-green-700">{activeCustomers.length}</div>
-                            <div className="text-[10px] text-green-600 font-medium">Active Customers</div>
+                            <div className="text-[10px] text-green-600 font-medium">{t('active_customers')}</div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Tabs */}
                 <div className="flex p-1 bg-gray-200 rounded-lg">
-                    {['tickets', 'verification', 'customers'].map(tab => (
+                    {['tickets', 'verification', 'customers', 'users'].map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -175,7 +198,7 @@ export default function AdminDashboard() {
                 <div className="min-h-[300px]">
                     {activeTab === 'tickets' && (
                         <div className="space-y-4">
-                            {tickets.length === 0 ? <p className="text-center text-gray-500 py-10">No active tickets.</p> : tickets.map((ticket) => (
+                            {tickets.length === 0 ? <p className="text-center text-gray-500 py-10">{t('no_active_tickets')}</p> : tickets.map((ticket) => (
                                 <Card key={ticket.id} className="border border-gray-100">
                                     <CardContent className="p-4 space-y-3">
                                         <div className="flex justify-between items-start">
@@ -216,19 +239,41 @@ export default function AdminDashboard() {
                                                 onChange={(e) => handleAssignTechnician(ticket.id, e.target.value)}
                                                 disabled={['closed', 'completed'].includes(ticket.status)}
                                             >
-                                                <option value="">Assign Technician...</option>
+                                                <option value="">{t('assign_technician')}...</option>
                                                 {technicians.map(tech => (
                                                     <option key={tech.id} value={tech.id}>{tech.name}</option>
                                                 ))}
                                             </select>
                                             {ticket.status === 'completed' && (
                                                 <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleCloseTicket(ticket.id)}>
-                                                    Close Ticket
+                                                    {t('close_ticket')}
                                                 </Button>
                                             )}
                                         </div>
                                     </CardContent>
                                 </Card>
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'amc' && (
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-blue-500" />
+                                AMC Requests ({amcRequests.length})
+                            </h3>
+                            {amcRequests.length === 0 ? <p className="text-gray-500 text-sm">No pending AMC requests.</p> : amcRequests.map(req => (
+                                <div key={req.id} className="bg-white p-4 rounded-lg border border-blue-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+                                    <div>
+                                        <p className="font-bold text-base">{req.amc_plans?.name}</p>
+                                        <p className="text-sm text-gray-600">for <span className="font-semibold">{req.profiles?.name}</span> ({req.profiles?.phone})</p>
+                                        <p className="text-xs text-gray-400 mt-1">Requested on {new Date(req.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <Button onClick={() => handleApproveAMC(req.id, req.amc_plans?.duration_months)} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                                        <CheckCircle className="w-4 h-4" />
+                                        Approve & Activate
+                                    </Button>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -239,7 +284,7 @@ export default function AdminDashboard() {
                                 <CardHeader>
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <UserPlus className="w-5 h-5 text-solar" />
-                                        Pre-Register New Customer
+                                        {t('pre_register_customer')}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -272,7 +317,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <Button onClick={() => handleVerifyCustomer(cust.id)} className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white gap-2">
                                             <CheckCircle className="w-4 h-4" />
-                                            Verify & Activate
+                                            {t('verify_activate')}
                                         </Button>
                                     </div>
                                 ))}
@@ -295,6 +340,36 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-gray-900">{t('user_management')}</h3>
+                            <div className="space-y-3">
+                                {allProfiles.map(profile => (
+                                    <div key={profile.id} className="bg-white p-3 rounded-lg border border-gray-100 flex flex-col md:flex-row justify-between md:items-center gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-sm">{profile.name || 'Unknown Name'}</p>
+                                                <Badge variant="outline" className="text-xs">{profile.role}</Badge>
+                                            </div>
+                                            <p className="text-xs text-gray-500">{profile.email || 'No Email (Check Auth)'} • {profile.phone || 'No Phone'}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                className="text-sm border border-gray-200 rounded p-1 bg-gray-50"
+                                                value={profile.role}
+                                                onChange={(e) => handleUpdateRole(profile.id, e.target.value)}
+                                            >
+                                                <option value="customer">Customer</option>
+                                                <option value="technician">Technician</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

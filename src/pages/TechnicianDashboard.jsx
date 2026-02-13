@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { Calendar, MapPin, CheckCircle, Play, Upload, Camera } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -9,6 +10,7 @@ import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
 
 export default function TechnicianDashboard() {
+    const { t } = useTranslation(); // [NEW]
     const { user, signOut } = useAuth();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -125,18 +127,18 @@ export default function TechnicianDashboard() {
     return (
         <div className="space-y-6 pb-20 bg-gray-50 min-h-screen">
             <Header
-                title="Technician Portal"
-                rightAction={<Button variant="ghost" size="sm" onClick={signOut} className="text-red-500">Sign Out</Button>}
+                title={t('technician_portal')}
+                rightAction={<Button variant="ghost" size="sm" onClick={signOut} className="text-red-500">{t('logout')}</Button>}
             />
 
             <div className="px-4 space-y-6">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-900">My Tasks</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{t('my_tasks')}</h2>
                     <Badge variant="outline">{tickets.filter(t => t.status !== 'completed').length} Active</Badge>
                 </div>
 
                 {tickets.length === 0 ? (
-                    <div className="text-center text-gray-500 py-10">No assigned tickets. Good job!</div>
+                    <div className="text-center text-gray-500 py-10">{t('no_assigned_tickets')}</div>
                 ) : (
                     <div className="space-y-4">
                         {tickets.map((ticket) => (
@@ -158,7 +160,7 @@ export default function TechnicianDashboard() {
                                     <div className="bg-white border rounded-lg p-3 text-sm space-y-2">
                                         <div className="flex items-start gap-2">
                                             <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                                            <span className="text-gray-600">{ticket.profiles?.address || 'No address provided'}</span>
+                                            <span className="text-gray-600">{ticket.profiles?.address || t('no_address')}</span>
                                         </div>
                                         <div className="flex items-start gap-2">
                                             <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
@@ -172,13 +174,13 @@ export default function TechnicianDashboard() {
                                     <div className="pt-2">
                                         {ticket.status === 'assigned' && (
                                             <Button className="w-full" onClick={() => handleStartWork(ticket.id)}>
-                                                <Play className="h-4 w-4 mr-2" /> Start Work
+                                                <Play className="h-4 w-4 mr-2" /> {t('start_work')}
                                             </Button>
                                         )}
 
                                         {ticket.status === 'in_progress' && !activeTicket && (
                                             <Button className="w-full" variant="success" onClick={() => setActiveTicket(ticket.id)}>
-                                                <CheckCircle className="h-4 w-4 mr-2" /> Mark Completed
+                                                <CheckCircle className="h-4 w-4 mr-2" /> {t('mark_completed')}
                                             </Button>
                                         )}
 
@@ -195,7 +197,7 @@ export default function TechnicianDashboard() {
                                                 <div className="flex items-center gap-2">
                                                     <label className="flex-1 cursor-pointer bg-white border border-dashed border-gray-300 rounded p-2 text-center text-sm text-gray-500 hover:bg-gray-50">
                                                         <Camera className="h-4 w-4 mx-auto mb-1" />
-                                                        {completionData.photo ? 'Photo Selected' : 'Upload Proof'}
+                                                        {completionData.photo ? 'Photo Selected' : t('upload_proof')}
                                                         <input type="file" accept="image/*" className="hidden" onChange={handleUploadPhoto} />
                                                     </label>
                                                 </div>
@@ -203,7 +205,7 @@ export default function TechnicianDashboard() {
                                                 <div className="flex gap-2">
                                                     <Button variant="outline" className="flex-1" onClick={() => setActiveTicket(null)}>Cancel</Button>
                                                     <Button variant="success" className="flex-1" onClick={handleCompleteWork} disabled={uploading}>
-                                                        {uploading ? 'Uploading...' : 'Submit Completion'}
+                                                        {uploading ? 'Uploading...' : t('submit_completion')}
                                                     </Button>
                                                 </div>
                                             </div>

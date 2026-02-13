@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, CreditCard, Bell, LogOut, ChevronRight, MapPin, Settings, Loader2 } from 'lucide-react';
+import { User, CreditCard, Bell, LogOut, ChevronRight, MapPin, Settings, Loader2, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Header } from '../components/layout/Header';
@@ -9,9 +10,14 @@ import { ticketService } from '../services/ticketService';
 
 export default function Account() {
     const { user, profile, signOut } = useAuth();
+    const { t, i18n } = useTranslation(); // [NEW]
     const [system, setSystem] = useState(null);
     const [ticketCount, setTicketCount] = useState(0);
     const [loading, setLoading] = useState(true);
+
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng);
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -43,7 +49,7 @@ export default function Account() {
 
     return (
         <div className="space-y-6 pb-6">
-            <Header title="Account" />
+            <Header title={t('account')} />
 
             <div className="px-4 space-y-6">
                 {/* Profile Card */}
@@ -65,21 +71,21 @@ export default function Account() {
                 {/* Installation Details */}
                 <Card>
                     <CardContent className="p-5">
-                        <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Installation Details</h3>
+                        <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">{t('installation_date')} & {t('capacity')}</h3>
                         {system ? (
                             <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                                 <div>
-                                    <p className="text-xs text-gray-500">System Size</p>
+                                    <p className="text-xs text-gray-500">{t('capacity')}</p>
                                     <p className="text-sm font-semibold text-gray-900">{system.capacity_kw} kW</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Installed On</p>
+                                    <p className="text-xs text-gray-500">{t('installation_date')}</p>
                                     <p className="text-sm font-semibold text-gray-900">
                                         {new Date(system.installation_date).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Service Requests</p>
+                                    <p className="text-xs text-gray-500">{t('services')}</p>
                                     <p className="text-sm font-semibold text-gray-900">{ticketCount} Total</p>
                                 </div>
                                 <div>
@@ -89,7 +95,7 @@ export default function Account() {
                                     </span>
                                 </div>
                                 <div className="col-span-2">
-                                    <p className="text-xs text-gray-500">Address</p>
+                                    <p className="text-xs text-gray-500">{t('address')}</p>
                                     <p className="text-sm font-semibold text-gray-900 flex items-start gap-1">
                                         <MapPin className="h-4 w-4 mt-0.5 text-gray-400" />
                                         {system.address || "Address not updated"}
@@ -107,10 +113,28 @@ export default function Account() {
                 {/* Settings Menu */}
                 <Card className="overflow-hidden">
                     <CardContent className="p-0 divide-y divide-gray-100">
+                        {/* Language Selector */}
+                        <div className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <Globe className="h-5 w-5 text-gray-500" />
+                                <span className="text-sm font-medium text-gray-700">{t('language')}</span>
+                            </div>
+                            <select
+                                className="text-sm border-gray-200 rounded p-1 bg-white"
+                                value={i18n.language}
+                                onChange={(e) => changeLanguage(e.target.value)}
+                            >
+                                <option value="en">English</option>
+                                <option value="hi">हिंदी (Hindi)</option>
+                                <option value="mr">मराठी (Marathi)</option>
+                                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                            </select>
+                        </div>
+
                         {[
                             { icon: CreditCard, label: 'Payment Methods' },
                             { icon: Bell, label: 'Notifications' },
-                            { icon: Settings, label: 'App Settings' },
+                            { icon: Settings, label: t('settings') },
                         ].map((item, i) => (
                             <button key={i} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">
                                 <div className="flex items-center gap-3">
@@ -125,7 +149,7 @@ export default function Account() {
 
                 <Button variant="ghost" className="w-full text-red-500 hover:text-red-600 hover:bg-red-50" onClick={signOut}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Log Out
+                    {t('logout')}
                 </Button>
             </div>
         </div>

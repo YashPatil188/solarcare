@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Download, Upload, Leaf, IndianRupee, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
@@ -11,6 +12,7 @@ import { supabase } from '../lib/supabase';
 const ranges = ['Day', 'Week', 'Month'];
 
 export default function Reports() {
+    const { t } = useTranslation(); // [NEW]
     const { user } = useAuth();
     const [activeRange, setActiveRange] = useState('Week');
     const [loading, setLoading] = useState(true);
@@ -123,7 +125,7 @@ export default function Reports() {
 
     return (
         <div className="space-y-6 pb-6">
-            <Header title="Reports" rightAction={<Button variant="ghost" size="icon" onClick={handleDownload}><Download className="h-5 w-5 text-gray-500" /></Button>} />
+            <Header title={t('reports')} rightAction={<Button variant="ghost" size="icon" onClick={handleDownload}><Download className="h-5 w-5 text-gray-500" /></Button>} />
 
             <div className="px-4 space-y-6">
                 {/* Time Range Toggle */}
@@ -146,7 +148,7 @@ export default function Reports() {
                 <Card>
                     <CardContent className="p-6">
                         <div className="mb-6">
-                            <p className="text-sm text-gray-500">Total Generation ({activeRange})</p>
+                            <p className="text-sm text-gray-500">{t('total_generation')} ({activeRange})</p>
                             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                                 {stats.totalGen} <span className="text-base font-medium text-gray-500">kWh</span>
                             </h3>
@@ -186,7 +188,7 @@ export default function Reports() {
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2 text-green-700">
                                 <Leaf className="h-4 w-4" />
-                                <span className="text-xs font-bold uppercase tracking-wide">CO₂ Saved</span>
+                                <span className="text-xs font-bold uppercase tracking-wide">{t('co2_saved')}</span>
                             </div>
                             <p className="text-xl font-bold text-gray-900">{stats.co2Saved} kg</p>
                             <p className="text-xs text-green-600 mt-1">~ {Math.ceil(stats.co2Saved / 20)} trees planted</p>
@@ -197,7 +199,7 @@ export default function Reports() {
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2 text-solar-dark">
                                 <IndianRupee className="h-4 w-4" />
-                                <span className="text-xs font-bold uppercase tracking-wide">Saved</span>
+                                <span className="text-xs font-bold uppercase tracking-wide">{t('money_saved')}</span>
                             </div>
                             <p className="text-xl font-bold text-gray-900">₹ {stats.moneySaved}</p>
                             <p className="text-xs text-solar-dark mt-1">This {activeRange.toLowerCase()}</p>

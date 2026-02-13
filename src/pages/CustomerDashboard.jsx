@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { Zap, Sun, Battery, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -9,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
 export default function CustomerDashboard() {
+    const { t } = useTranslation(); // [NEW]
     const { user, profile } = useAuth();
     const [system, setSystem] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export default function CustomerDashboard() {
     return (
         <div className="space-y-6 pb-6">
             <Header
-                title="Dashboard"
+                title={t('dashboard')}
                 rightAction={
                     <div className="h-8 w-8 rounded-full bg-solar/10 flex items-center justify-center text-solar font-bold text-xs ring-2 ring-white">
                         {profile?.name?.charAt(0) || 'U'}
@@ -68,14 +70,14 @@ export default function CustomerDashboard() {
                                 <>
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="font-semibold text-green-700">System Healthy</span>
+                                        <span className="font-semibold text-green-700">{t('system_healthy')}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500">Capacity: {system.capacity_kw} kW</p>
+                                    <p className="text-sm text-gray-500">{t('capacity')}: {system.capacity_kw} kW</p>
                                 </>
                             ) : (
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="h-3 w-3 rounded-full bg-gray-400" />
-                                    <span className="font-semibold text-gray-600">No System Linked</span>
+                                    <span className="font-semibold text-gray-600">{t('no_system')}</span>
                                 </div>
                             )}
                         </div>
@@ -95,7 +97,7 @@ export default function CustomerDashboard() {
                                         <Sun className="h-5 w-5" />
                                     </div>
                                     <span className="text-2xl font-bold text-gray-900">{currentOutput} kW</span>
-                                    <span className="text-xs text-gray-500">Current Output</span>
+                                    <span className="text-xs text-gray-500">{t('current_output')}</span>
                                 </CardContent>
                             </Card>
                             <Card>
@@ -104,7 +106,7 @@ export default function CustomerDashboard() {
                                         <Zap className="h-5 w-5" />
                                     </div>
                                     <span className="text-2xl font-bold text-gray-900">{todaysGen} kWh</span>
-                                    <span className="text-xs text-gray-500">Today's Generation</span>
+                                    <span className="text-xs text-gray-500">{t('todays_generation')}</span>
                                 </CardContent>
                             </Card>
                         </div>
@@ -163,7 +165,7 @@ export default function CustomerDashboard() {
                 {/* CTA */}
                 <Link to="/services">
                     <Button className="w-full shadow-lg shadow-solar/30" size="lg">
-                        Raise Service Request
+                        {t('request_service')}
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </Link>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '../components/ui/Button';
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { User, Mail, Lock, Phone } from 'lucide-react';
 
 export default function Signup() {
+    const { t } = useTranslation(); // [NEW]
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -94,8 +96,8 @@ export default function Signup() {
                     <div className="mx-auto h-12 w-12 bg-solar rounded-xl flex items-center justify-center">
                         <User className="h-6 w-6 text-white" />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
-                    <p className="text-sm text-gray-500">Join SolarCare to manage your energy</p>
+                    <CardTitle className="text-2xl font-bold text-gray-900">{t('create_account')}</CardTitle>
+                    <p className="text-sm text-gray-500">{t('join_solarcare')}</p>
                 </CardHeader>
                 <CardContent>
                     <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg mb-4">
@@ -106,7 +108,7 @@ export default function Signup() {
                     <form onSubmit={handleSubmit} className="space-y-3">
 
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-700">Full Name</label>
+                            <label className="text-xs font-medium text-gray-700">{t('full_name')}</label>
                             <div className="relative">
                                 <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input
@@ -166,14 +168,14 @@ export default function Signup() {
                         </div>
 
                         <Button type="submit" className="w-full font-bold mt-2" disabled={loading} isLoading={loading}>
-                            Create Account
+                            {t('create_account')}
                         </Button>
                     </form>
 
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        Already have an account?{' '}
+                        {t('already_have_account')}{' '}
                         <Link to="/login" className="text-solar-dark font-semibold hover:underline">
-                            Sign in
+                            {t('signin')}
                         </Link>
                     </div>
                 </CardContent>

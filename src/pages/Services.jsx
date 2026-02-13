@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { Wrench, Droplets, Zap, Activity, Clock, Phone, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,6 +23,7 @@ const services = [
 ];
 
 export default function Services() {
+    const { t } = useTranslation(); // [NEW]
     const { user } = useAuth();
     const { toast } = useToast();
     const [tickets, setTickets] = useState([]);
@@ -91,12 +93,12 @@ export default function Services() {
 
     return (
         <div className="space-y-6 pb-6">
-            <Header title="Services" />
+            <Header title={t('services')} />
 
             <div className="px-4 space-y-8">
                 {/* Request New Service */}
                 <section>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Request Service</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">{t('request_service')}</h2>
                     <div className="grid grid-cols-2 gap-4">
                         {services.map((service) => (
                             <Card
@@ -119,10 +121,15 @@ export default function Services() {
                 <Card className="bg-red-50 border-red-100">
                     <CardContent className="p-5 flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-red-700">Emergency Support</h3>
+                            <h3 className="font-bold text-red-700">{t('emergency_support')}</h3>
                             <p className="text-xs text-red-600/80">System breakdown? 24x7 Help</p>
                         </div>
-                        <Button variant="danger" size="sm" className="shadow-none">
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            className="shadow-none"
+                            onClick={() => window.location.href = 'tel:8792015164'}
+                        >
                             <Phone className="h-4 w-4 mr-2" />
                             Call Now
                         </Button>
@@ -162,7 +169,7 @@ export default function Services() {
                 {/* Recent Tickets */}
                 <section>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">Recent Requests</h2>
+                        <h2 className="text-lg font-bold text-gray-900">{t('recent_requests')}</h2>
                         <Button variant="ghost" size="sm" className="text-solar h-auto p-0">View All</Button>
                     </div>
 

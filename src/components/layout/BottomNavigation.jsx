@@ -1,16 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Wrench, FileText, ShieldCheck, IndianRupee, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // [NEW]
 import { cn } from '../../lib/utils';
 
 export function BottomNavigation() {
     const location = useLocation();
+    const { t } = useTranslation(); // [NEW]
 
     const tabs = [
-        { path: '/customer-dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/services', label: 'Services', icon: Wrench },
-        { path: '/reports', label: 'Reports', icon: FileText },
-        { path: '/amc', label: 'AMC', icon: ShieldCheck },
-        { path: '/account', label: 'Account', icon: User },
+        { path: '/customer-dashboard', label: t('dashboard'), icon: LayoutDashboard },
+        { path: '/services', label: t('services'), icon: Wrench },
+        { path: '/reports', label: t('reports'), icon: FileText },
+        { path: '/amc', label: t('amc_title'), icon: ShieldCheck },
+        { path: '/account', label: t('account'), icon: User },
     ];
 
     return (
