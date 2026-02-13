@@ -6,7 +6,7 @@ export function BottomNavigation() {
     const location = useLocation();
 
     const tabs = [
-        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/customer-dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/services', label: 'Services', icon: Wrench },
         { path: '/reports', label: 'Reports', icon: FileText },
         { path: '/amc', label: 'AMC', icon: ShieldCheck },

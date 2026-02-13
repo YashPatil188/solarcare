@@ -1,16 +1,39 @@
-# React + Vite
+# SolarCare Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive solar system management platform for customers, technicians, and administrators.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+*   Node.js (v18+)
+*   Supabase Account & Project
+*   `.env` file configured with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
 
-## React Compiler
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Run Development Server
+```bash
+npm run dev
+```
+The app will open at `http://localhost:5173` (or the next available port).
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
+*   **Frontend**: React + Vite
+*   **Styling**: Tailwind CSS
+*   **Backend**: Supabase (Auth, Database, Storage)
+*   **Icons**: Lucide React
+*   **Router**: React Router DOM
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🔐 Credentials (Demo)
+*   **Admin**: (Create via Supabase Auth, set role to 'admin' in `profiles` table)
+*   **Technician**: (Create via Supabase Auth, set role to 'technician' in `profiles` table)
+*   **Customer**: Pre-register via Admin Dashboard, then sign up.
+
+## 📂 Project Structure
+*   `src/pages`: Main application views
+*   `src/components`: Reusable UI components
+*   `src/context`: Global state (Auth, Toast)
+*   `src/lib`: Database configuration
