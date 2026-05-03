@@ -64,11 +64,11 @@ export function SlotBookingModal({ isOpen, onClose, userId, systemId, serviceTyp
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-50/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[90vh]">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-solar" />
-                    Book {serviceType.replace('_', ' ')}
+                    Book {serviceType.replaceAll('_', ' ').toUpperCase()}
                 </h2>
 
                 <div className="space-y-4 overflow-y-auto pr-1">
@@ -101,7 +101,7 @@ export function SlotBookingModal({ isOpen, onClose, userId, systemId, serviceTyp
                                     <button
                                         key={slot}
                                         onClick={() => setSelectedSlot(slot)}
-                                        className={`p-2 rounded border text-sm font-medium transition-all ${selectedSlot === slot ? 'bg-solar text-white border-solar' : 'hover:bg-gray-50 border-gray-200'}`}
+                                        className={`p-2 rounded border text-sm font-medium transition-all ${selectedSlot === slot ? 'bg-solar text-gray-900 border-solar' : 'hover:bg-gray-50 border-gray-200'}`}
                                     >
                                         {slot}
                                     </button>

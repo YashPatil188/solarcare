@@ -125,18 +125,18 @@ export default function Reports() {
 
     return (
         <div className="space-y-6 pb-6">
-            <Header title={t('reports')} rightAction={<Button variant="ghost" size="icon" onClick={handleDownload}><Download className="h-5 w-5 text-gray-500" /></Button>} />
+            <Header title={t('reports')} rightAction={<Button variant="ghost" size="icon" className="hover:bg-gray-50" onClick={handleDownload}><Download className="h-5 w-5 text-gray-500" /></Button>} />
 
             <div className="px-4 space-y-6">
                 {/* Time Range Toggle */}
-                <div className="bg-gray-100 p-1 rounded-xl flex">
+                <div className="bg-gray-50 border border-gray-200 p-1.5 rounded-xl flex">
                     {ranges.map((range) => (
                         <button
                             key={range}
                             onClick={() => setActiveRange(range)}
                             className={cn(
-                                "flex-1 py-2 text-xs font-semibold rounded-lg transition-all",
-                                activeRange === range ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+                                "flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
+                                activeRange === range ? "bg-solar shadow-md shadow-solar/10 text-white" : "text-gray-400 hover:text-gray-700"
                             )}
                         >
                             {range}
@@ -145,34 +145,34 @@ export default function Reports() {
                 </div>
 
                 {/* Chart Card */}
-                <Card>
+                <Card className="bg-white border-gray-200">
                     <CardContent className="p-6">
                         <div className="mb-6">
-                            <p className="text-sm text-gray-500">{t('total_generation')} ({activeRange})</p>
-                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                {stats.totalGen} <span className="text-base font-medium text-gray-500">kWh</span>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">{t('total_generation')} ({activeRange})</p>
+                            <h3 className="text-3xl font-black text-gray-900 flex items-baseline gap-2 tracking-wide">
+                                {stats.totalGen} <span className="text-base font-bold text-gray-500">kWh</span>
                             </h3>
                         </div>
 
                         <div className="h-64 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
                                     <XAxis
                                         dataKey="name"
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 10, fill: '#9CA3AF' }}
+                                        tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}
                                         dy={10}
                                         interval={activeRange === 'Month' ? 6 : 0}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: '#F3F4F6' }}
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                        contentStyle={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: '#1a1a1a', color: 'white', fontWeight: 'bold' }}
                                     />
                                     <Bar
                                         dataKey="kwh"
-                                        fill="#F4B400"
+                                        fill="#0ce86b"
                                         radius={[4, 4, 0, 0]}
                                         barSize={activeRange === 'Month' ? 6 : 20}
                                     />
@@ -184,25 +184,25 @@ export default function Reports() {
 
                 {/* Impact Stats */}
                 <div className="grid grid-cols-2 gap-4">
-                    <Card className="bg-green-50 border-green-100">
+                    <Card className="bg-emerald-500/10 border-emerald-500/20 shadow-none">
                         <CardContent className="p-4">
-                            <div className="flex items-center gap-2 mb-2 text-green-700">
+                            <div className="flex items-center gap-2 mb-2 text-emerald-400">
                                 <Leaf className="h-4 w-4" />
-                                <span className="text-xs font-bold uppercase tracking-wide">{t('co2_saved')}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">{t('co2_saved')}</span>
                             </div>
-                            <p className="text-xl font-bold text-gray-900">{stats.co2Saved} kg</p>
-                            <p className="text-xs text-green-600 mt-1">~ {Math.ceil(stats.co2Saved / 20)} trees planted</p>
+                            <p className="text-xl font-black text-emerald-400 tracking-wide">{stats.co2Saved} kg</p>
+                            <p className="text-xs text-emerald-400/70 mt-1 font-medium">~ {Math.ceil(stats.co2Saved / 20)} trees planted</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-solar-light border-solar/20">
+                    <Card className="bg-solar-light border-solar/20 shadow-none">
                         <CardContent className="p-4">
-                            <div className="flex items-center gap-2 mb-2 text-solar-dark">
+                            <div className="flex items-center gap-2 mb-2 text-solar">
                                 <IndianRupee className="h-4 w-4" />
-                                <span className="text-xs font-bold uppercase tracking-wide">{t('money_saved')}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">{t('money_saved')}</span>
                             </div>
-                            <p className="text-xl font-bold text-gray-900">₹ {stats.moneySaved}</p>
-                            <p className="text-xs text-solar-dark mt-1">This {activeRange.toLowerCase()}</p>
+                            <p className="text-xl font-black text-solar tracking-wide">₹ {stats.moneySaved}</p>
+                            <p className="text-xs text-solar/70 mt-1 font-medium">This {activeRange.toLowerCase()}</p>
                         </CardContent>
                     </Card>
                 </div>

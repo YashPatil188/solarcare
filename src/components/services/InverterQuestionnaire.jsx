@@ -98,7 +98,7 @@ export function InverterQuestionnaire({ isOpen, onClose, userId, systemId, onSuc
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-50/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <Zap className="w-5 h-5 text-solar" />
@@ -115,7 +115,7 @@ export function InverterQuestionnaire({ isOpen, onClose, userId, systemId, onSuc
                                     <button
                                         key={option}
                                         onClick={() => handleOptionSelect(q.id, option)}
-                                        className={`px-4 py-2 rounded-full text-xs font-medium border transition-all ${answers[q.id] === option ? 'bg-solar text-white border-solar shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium border transition-all ${answers[q.id] === option ? 'bg-solar text-gray-900 border-solar shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {option}
                                     </button>

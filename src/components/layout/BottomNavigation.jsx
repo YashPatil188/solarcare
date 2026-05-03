@@ -16,7 +16,7 @@ export function BottomNavigation() {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 pb-safe">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-lg border-t border-gray-200 pb-safe">
             <div className="flex justify-around items-center h-16">
                 {tabs.map((tab) => {
                     const isActive = location.pathname === tab.path;
@@ -26,7 +26,7 @@ export function BottomNavigation() {
                             to={tab.path}
                             className={cn(
                                 'flex flex-col items-center justify-center w-full h-full space-y-1',
-                                isActive ? 'text-solar' : 'text-gray-400 hover:text-gray-600'
+                                isActive ? 'text-solar' : 'text-gray-400 hover:text-gray-700'
                             )}
                         >
                             <tab.icon className={cn("h-5 w-5", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />

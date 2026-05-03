@@ -7,17 +7,17 @@ export function Badge({
     ...props
 }) {
     const variants = {
-        default: 'bg-gray-100 text-gray-800',
-        success: 'bg-green-100 text-green-700',
-        warning: 'bg-yellow-100 text-yellow-700',
-        error: 'bg-red-100 text-red-700',
-        solar: 'bg-solar-light text-solar-dark',
+        default: 'bg-gray-100 text-gray-900 border border-gray-200',
+        success: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+        warning: 'bg-amber-500/20 text-amber-400 border border-whitember-500/30',
+        error: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
+        solar: 'bg-solar-light text-solar border border-solar/30',
     };
 
     return (
         <div
             className={cn(
-                'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                'inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                 variants[variant],
                 className
             )}

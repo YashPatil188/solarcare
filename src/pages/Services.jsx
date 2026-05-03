@@ -16,10 +16,10 @@ import { SlotBookingModal } from '../components/services/SlotBookingModal';
 import { InverterQuestionnaire } from '../components/services/InverterQuestionnaire';
 
 const services = [
-    { id: 'site_visit', name: 'Site Visit', icon: Wrench, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { id: 'panel_cleaning', name: 'Panel Cleaning', icon: Droplets, color: 'text-cyan-500', bg: 'bg-cyan-50' },
-    { id: 'inverter_issue', name: 'Inverter Issue', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
-    { id: 'health_check', name: 'Health Check', icon: Activity, color: 'text-green-500', bg: 'bg-green-50' },
+    { id: 'site_visit', name: 'Site Visit', icon: Wrench, color: 'text-blue-400', bg: 'bg-blue-500/10 border border-blue-500/20' },
+    { id: 'panel_cleaning', name: 'Panel Cleaning', icon: Droplets, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border border-cyan-500/20' },
+    { id: 'inverter_issue', name: 'Inverter Issue', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-500/10 border border-whitember-500/20' },
+    { id: 'health_check', name: 'Health Check', icon: Activity, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border border-emerald-500/20' },
 ];
 
 export default function Services() {
@@ -98,19 +98,19 @@ export default function Services() {
             <div className="px-4 space-y-8">
                 {/* Request New Service */}
                 <section>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">{t('request_service')}</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-wide uppercase">{t('request_service')}</h2>
                     <div className="grid grid-cols-2 gap-4">
                         {services.map((service) => (
                             <Card
                                 key={service.id}
-                                className="interactive hover:border-solar hover:shadow-md transition-all cursor-pointer group"
+                                className="bg-white hover:-translate-y-1 hover:shadow-md shadow-solar/10 hover:border-solar/50 transition-all cursor-pointer group"
                                 onClick={() => handleRequestClick(service.id)}
                             >
-                                <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                                    <div className={`h-12 w-12 rounded-2xl ${service.bg} ${service.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                                        <service.icon className="h-6 w-6" />
+                                <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                                    <div className={`h-14 w-14 rounded-xl ${service.bg} ${service.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_15px_currentColor]`}>
+                                        <service.icon className="h-6 w-6 stroke-[1.5]" />
                                     </div>
-                                    <span className="font-medium text-gray-900 text-sm">{service.name}</span>
+                                    <span className="font-bold text-gray-900 text-sm tracking-wide uppercase">{service.name}</span>
                                 </CardContent>
                             </Card>
                         ))}
@@ -118,11 +118,11 @@ export default function Services() {
                 </section>
 
                 {/* Emergency Support */}
-                <Card className="bg-red-50 border-red-100">
+                <Card className="bg-red-500/10 border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                     <CardContent className="p-5 flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-red-700">{t('emergency_support')}</h3>
-                            <p className="text-xs text-red-600/80">System breakdown? 24x7 Help</p>
+                            <h3 className="font-bold text-red-400 uppercase tracking-wider">{t('emergency_support')}</h3>
+                            <p className="text-xs font-medium text-red-400/80 mt-1">System breakdown? 24x7 Help</p>
                         </div>
                         <Button
                             variant="danger"
@@ -169,30 +169,30 @@ export default function Services() {
                 {/* Recent Tickets */}
                 <section>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">{t('recent_requests')}</h2>
-                        <Button variant="ghost" size="sm" className="text-solar h-auto p-0">View All</Button>
+                        <h2 className="text-lg font-bold text-gray-900 tracking-wide uppercase">{t('recent_requests')}</h2>
+                        <Button variant="ghost" size="sm" className="text-solar h-auto p-0 hover:bg-transparent hover:text-solar-dark tracking-wide uppercase text-xs">View All</Button>
                     </div>
 
                     <div className="space-y-3">
                         {tickets.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500 text-sm">No service requests yet.</div>
+                            <div className="text-center py-8 text-gray-500 text-sm font-medium tracking-wide">No service requests yet.</div>
                         ) : (
                             tickets.map((ticket) => (
-                                <Card key={ticket.id}>
+                                <Card key={ticket.id} className="bg-white">
                                     <CardContent className="p-4 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 border border-gray-200">
                                                 <Clock className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-900 text-sm capitalize">{ticket.issue_type}</p>
-                                                <p className="text-xs text-gray-500">
-                                                    {new Date(ticket.created_at).toLocaleDateString()} • {ticket.status}
+                                                <p className="font-bold text-gray-900 text-sm uppercase tracking-wider">{ticket.issue_type.replaceAll('_', ' ').toUpperCase()}</p>
+                                                <p className="text-xs font-medium text-gray-500 mt-0.5">
+                                                    {new Date(ticket.created_at).toLocaleDateString()} • {ticket.status.replaceAll('_', ' ').toUpperCase()}
                                                 </p>
                                             </div>
                                         </div>
-                                        <Badge variant={getStatusVariant(ticket.status)}>
-                                            {ticket.status.replace('_', ' ')}
+                                        <Badge variant={getStatusVariant(ticket.status)} className="font-bold uppercase tracking-wider">
+                                            {ticket.status.replaceAll('_', ' ').toUpperCase()}
                                         </Badge>
                                     </CardContent>
                                 </Card>

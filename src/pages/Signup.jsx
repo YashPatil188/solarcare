@@ -90,31 +90,31 @@ export default function Signup() {
     };
 
     return (
-        <div className="min-h-screen bg-solar/10 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-white shadow-xl border-solar/20">
-                <CardHeader className="text-center space-y-2">
-                    <div className="mx-auto h-12 w-12 bg-solar rounded-xl flex items-center justify-center">
-                        <User className="h-6 w-6 text-white" />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-white shadow-md shadow-solar/10 border border-gray-200 rounded-3xl">
+                <CardHeader className="text-center space-y-3 pb-2">
+                    <div className="mx-auto h-16 w-16 bg-solar-light rounded-2xl border border-solar/30 flex items-center justify-center shadow-md shadow-solar/10">
+                        <User className="h-7 w-7 text-solar" />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-gray-900">{t('create_account')}</CardTitle>
-                    <p className="text-sm text-gray-500">{t('join_solarcare')}</p>
+                    <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">{t('create_account')}</CardTitle>
+                    <p className="text-sm font-medium text-gray-500">{t('join_solarcare')}</p>
                 </CardHeader>
-                <CardContent>
-                    <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg mb-4">
+                <CardContent className="pt-6">
+                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-3 rounded-xl mb-4">
                         <strong>Note:</strong> You must be an existing verified customer to sign up.
                         Use the email address registered with your installation.
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-3">
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-700">{t('full_name')}</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('full_name')}</label>
                             <div className="relative">
-                                <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <User className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="John Doe"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -122,14 +122,14 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-700">Email</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Email</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="you@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -137,14 +137,14 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-700">Phone</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone</label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <Phone className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="+91 98765 43210"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
@@ -152,14 +152,14 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-700">Password</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Password</label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -167,14 +167,14 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="w-full font-bold mt-2" disabled={loading} isLoading={loading}>
+                        <Button type="submit" className="w-full text-lg h-14 mt-6 bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/10" disabled={loading} isLoading={loading}>
                             {t('create_account')}
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-gray-500">
+                    <div className="mt-8 text-center text-sm font-medium text-gray-500">
                         {t('already_have_account')}{' '}
-                        <Link to="/login" className="text-solar-dark font-semibold hover:underline">
+                        <Link to="/login" className="text-solar hover:text-[#00c958] font-bold tracking-wide transition-colors">
                             {t('signin')}
                         </Link>
                     </div>

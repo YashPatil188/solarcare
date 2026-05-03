@@ -10,10 +10,10 @@ export function Button({
     ...props
 }) {
     const variants = {
-        primary: 'bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/20',
-        secondary: 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 shadow-sm',
-        ghost: 'hover:bg-gray-100 text-gray-700',
-        danger: 'bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20',
+        primary: 'bg-solar hover:bg-solar-dark text-white font-bold shadow-md shadow-solar/10',
+        secondary: 'bg-gray-50 hover:bg-[#222222] text-gray-900 border border-gray-200',
+        ghost: 'hover:bg-gray-100 text-gray-600 hover:text-gray-900',
+        danger: 'bg-red-500 hover:bg-red-600 text-gray-900 shadow-[0_0_15px_rgba(239,68,68,0.3)]',
         outline: 'border-2 border-solar text-solar hover:bg-solar-light',
     };
 
@@ -27,7 +27,7 @@ export function Button({
     return (
         <button
             className={cn(
-                'inline-flex items-center justify-center rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
+                'inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-300 hover:shadow-md shadow-solar/10 active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
                 variants[variant],
                 sizes[size],
                 className

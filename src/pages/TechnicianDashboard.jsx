@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next'; // [NEW]
-import { Calendar, MapPin, CheckCircle, Play, Upload, Camera } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, Play, Upload, Camera, Users, Phone, Navigation } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -10,8 +10,9 @@ import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
 
 export default function TechnicianDashboard() {
-    const { t } = useTranslation(); // [NEW]
+    const { t } = useTranslation();
     const { user, signOut } = useAuth();
+    const { toast } = useToast(); // [FIX] Destructure toast
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -68,6 +69,10 @@ export default function TechnicianDashboard() {
             toast.error('Please add remarks.');
             return;
         }
+        if (!completionData.photo) {
+            toast.error('Photo proof is required to complete the job.');
+            return;
+        }
 
         setUploading(true);
         try {
@@ -77,14 +82,14 @@ export default function TechnicianDashboard() {
             if (completionData.photo) {
                 const fileName = `${activeTicket}-${Date.now()}.jpg`;
                 const { data, error: uploadError } = await supabase.storage
-                    .from('service-photos')
+                    .from('service-attachments')
                     .upload(fileName, completionData.photo);
 
                 if (uploadError) throw uploadError;
 
                 // Get Public URL
                 const { data: { publicUrl } } = supabase.storage
-                    .from('service-photos')
+                    .from('service-attachments')
                     .getPublicUrl(fileName);
 
                 photoUrl = publicUrl;
@@ -103,11 +108,27 @@ export default function TechnicianDashboard() {
 
             if (updateError) throw updateError;
 
-            // 3. Update Ticket Status
+            // 3. Update Ticket Status AND Photos
+
+            // First fetch existing photos
+            const { data: ticketData } = await supabase
+                .from('tickets')
+                .select('photos')
+                .eq('id', activeTicket)
+                .single();
+
+            const existingPhotos = Array.isArray(ticketData?.photos) ? ticketData.photos : [];
+            if (photoUrl) existingPhotos.push({ url: photoUrl, type: 'completion_proof', timestamp: new Date().toISOString() });
+
             const { error: ticketError } = await supabase
                 .from('tickets')
-                .update({ status: 'completed' })
+                .update({
+                    status: 'completed',
+                    photos: existingPhotos
+                })
                 .eq('id', activeTicket);
+
+            if (ticketError) throw ticketError;
 
             if (ticketError) throw ticketError;
 
@@ -133,39 +154,75 @@ export default function TechnicianDashboard() {
 
             <div className="px-4 space-y-6">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-gray-900">{t('my_tasks')}</h2>
+                    <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wider">{t('my_tasks')}</h2>
                     <Badge variant="outline">{tickets.filter(t => t.status !== 'completed').length} Active</Badge>
                 </div>
 
                 {tickets.length === 0 ? (
-                    <div className="text-center text-gray-500 py-10">{t('no_assigned_tickets')}</div>
+                    <div className="text-center text-gray-500 py-10 tracking-wide">{t('no_assigned_tickets')}</div>
                 ) : (
                     <div className="space-y-4">
                         {tickets.map((ticket) => (
-                            <Card key={ticket.id} className="border-l-4 border-l-solar">
-                                <CardContent className="p-4 space-y-3">
+                            <Card key={ticket.id} className="border-l-4 border-l-solar overflow-hidden hover:shadow-md shadow-solar/10 transition-all bg-white">
+                                <CardContent className="p-5 space-y-4">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-bold text-gray-900 capitalize text-lg">{ticket.issue_type.replace('_', ' ')}</h3>
-                                            <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                                                <Users className="h-3 w-3" />
+                                            <h3 className="font-extrabold text-gray-900 uppercase tracking-wider text-lg">{ticket.issue_type.replaceAll('_', ' ').toUpperCase()}</h3>
+                                            <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500 mt-1">
+                                                <Users className="h-4 w-4" />
                                                 <span>{ticket.profiles?.name}</span>
                                             </div>
                                         </div>
-                                        <Badge variant={ticket.status === 'in_progress' ? 'warning' : 'default'}>
-                                            {ticket.status.replace('_', ' ')}
+                                        <Badge variant={ticket.status === 'in_progress' ? 'warning' : 'default'} className="font-bold uppercase tracking-wider shadow-sm">
+                                            {ticket.status.replaceAll('_', ' ').toUpperCase()}
                                         </Badge>
                                     </div>
 
-                                    <div className="bg-white border rounded-lg p-3 text-sm space-y-2">
-                                        <div className="flex items-start gap-2">
+                                    {/* Process Stepper */}
+                                    <div className="flex items-center justify-between text-xs font-bold text-gray-400 py-3 border-y border-gray-200 uppercase tracking-wider">
+                                        <div className={`flex items-center gap-1 ${ticket.status !== 'assigned' ? 'text-solar' : 'text-blue-400'}`}>
+                                            <div className="w-2 h-2 rounded-full bg-current shadow-sm"></div> 1. {t('assigned')}
+                                        </div>
+                                        <div className={`h-0.5 flex-1 mx-2 rounded-full ${ticket.status !== 'assigned' ? 'bg-solar/30' : 'bg-gray-100'}`}></div>
+                                        <div className={`flex items-center gap-1 ${ticket.status === 'in_progress' ? 'text-blue-400' : (['completed', 'closed'].includes(ticket.status) ? 'text-solar' : 'text-gray-300')}`}>
+                                            <div className="w-2 h-2 rounded-full bg-current shadow-sm"></div> 2. {t('in_progress')}
+                                        </div>
+                                        <div className={`h-0.5 flex-1 mx-2 rounded-full ${['completed', 'closed'].includes(ticket.status) ? 'bg-solar/30' : 'bg-gray-100'}`}></div>
+                                        <div className={`flex items-center gap-1 ${['completed', 'closed'].includes(ticket.status) ? 'text-solar' : 'text-gray-300'}`}>
+                                            <div className="w-2 h-2 rounded-full bg-current shadow-sm"></div> 3. {t('completed')}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm space-y-3.5">
+                                        <div className="flex items-start gap-3">
                                             <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                                            <span className="text-gray-600">{ticket.profiles?.address || t('no_address')}</span>
+                                            <div className="flex-1">
+                                                <span className="text-gray-700 block">{ticket.profiles?.address || t('no_address')}</span>
+                                                <a
+                                                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ticket.profiles?.address)}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-blue-400 text-xs hover:underline flex items-center gap-1 mt-1 font-bold tracking-wide"
+                                                >
+                                                    <Navigation className="w-3 h-3" /> {t('navigate')}
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <Phone className="h-4 w-4 text-gray-400 mt-0.5" />
+                                            <div className="flex-1">
+                                                <span className="text-gray-700 block">{ticket.profiles?.phone || 'No Phone'}</span>
+                                                {ticket.profiles?.phone && (
+                                                    <a href={`tel:${ticket.profiles.phone}`} className="text-blue-400 text-xs hover:underline flex items-center gap-1 mt-1 font-bold tracking-wide">
+                                                        <Phone className="w-3 h-3" /> {t('call_customer')}
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex items-start gap-2">
                                             <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
-                                            <span className="text-gray-600">
-                                                {new Date(ticket.created_at).toLocaleDateString()} • {ticket.solar_systems?.capacity_kw}kW System
+                                            <span className="text-gray-700">
+                                                {new Date(ticket.created_at).toLocaleDateString()} • <span className="font-bold">{ticket.solar_systems?.capacity_kw}kW System</span>
                                             </span>
                                         </div>
                                     </div>
@@ -185,9 +242,9 @@ export default function TechnicianDashboard() {
                                         )}
 
                                         {activeTicket === ticket.id && (
-                                            <div className="bg-gray-100 p-3 rounded-lg space-y-3 animate-in fade-in slide-in-from-top-2">
+                                            <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
                                                 <textarea
-                                                    className="w-full p-2 text-sm border rounded"
+                                                    className="w-full p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-white/30 focus:border-solar focus:ring-1 focus:ring-solar outline-none transition-all"
                                                     placeholder="Technician remarks..."
                                                     rows="3"
                                                     value={completionData.remarks}
@@ -223,6 +280,6 @@ export default function TechnicianDashboard() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

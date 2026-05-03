@@ -67,27 +67,27 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-solar/10 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-white shadow-xl border-solar/20">
-                <CardHeader className="text-center space-y-2">
-                    <div className="mx-auto h-12 w-12 bg-solar rounded-xl flex items-center justify-center">
-                        <Lock className="h-6 w-6 text-white" />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-white shadow-md shadow-solar/10 border border-gray-200 rounded-3xl">
+                <CardHeader className="text-center space-y-3 pb-2">
+                    <div className="mx-auto h-16 w-16 bg-solar-light rounded-2xl border border-solar/30 flex items-center justify-center shadow-md shadow-solar/10">
+                        <Lock className="h-7 w-7 text-solar" />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-gray-900">{t('welcome')}</CardTitle>
-                    <p className="text-sm text-gray-500">{t('signin_desc')}</p>
+                    <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">{t('welcome')}</CardTitle>
+                    <p className="text-sm font-medium text-gray-500">{t('signin_desc')}</p>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                     {/* Toggle Auth Method */}
-                    <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
+                    <div className="flex p-1.5 bg-gray-50 border border-gray-200 rounded-xl mb-6">
                         <button
                             onClick={() => { setAuthMethod('email'); setOtpSent(false); }}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${authMethod === 'email' ? 'bg-white shadow text-solar-dark' : 'text-gray-500'}`}
+                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${authMethod === 'email' ? 'bg-solar text-white shadow-md shadow-solar/10' : 'text-gray-400 hover:text-gray-700'}`}
                         >
                             Email
                         </button>
                         <button
                             onClick={() => setAuthMethod('phone')}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${authMethod === 'phone' ? 'bg-white shadow text-solar-dark' : 'text-gray-500'}`}
+                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${authMethod === 'phone' ? 'bg-solar text-white shadow-md shadow-solar/10' : 'text-gray-400 hover:text-gray-700'}`}
                         >
                             Phone (OTP)
                         </button>
@@ -96,13 +96,13 @@ export default function Login() {
                     {authMethod === 'email' ? (
                         <form onSubmit={handleEmailLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">{t('email')}</label>
+                                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('email')}</label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                    <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                     <input
                                         type="email"
                                         required
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                         placeholder="you@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -111,13 +111,13 @@ export default function Login() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">{t('password')}</label>
+                                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('password')}</label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                    <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                     <input
                                         type="password"
                                         required
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -125,21 +125,21 @@ export default function Login() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full font-bold" disabled={loading} isLoading={loading}>
+                            <Button type="submit" className="w-full text-lg h-14 mt-4 bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/10" disabled={loading} isLoading={loading}>
                                 {t('signin')}
                             </Button>
                         </form>
                     ) : (
                         <form onSubmit={handlePhoneLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone Number</label>
                                 <div className="relative">
-                                    <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                    <Phone className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                     <input
                                         type="tel"
                                         required
                                         disabled={otpSent}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium disabled:opacity-50"
                                         placeholder="+91 9876543210"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
@@ -149,14 +149,14 @@ export default function Login() {
 
                             {otpSent && (
                                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                    <label className="text-sm font-medium text-gray-700">Enter OTP</label>
+                                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Enter OTP</label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                        <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                         <input
                                             type="text"
                                             required
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-solar focus:border-transparent outline-none transition-all"
-                                            placeholder="123456"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium tracking-[0.5em] text-center"
+                                            placeholder="••••••"
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value)}
                                         />
@@ -164,15 +164,15 @@ export default function Login() {
                                 </div>
                             )}
 
-                            <Button type="submit" className="w-full font-bold" disabled={loading} isLoading={loading}>
+                            <Button type="submit" className="w-full text-lg h-14 mt-4 bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/10" disabled={loading} isLoading={loading}>
                                 {otpSent ? 'Verify & Login' : 'Send OTP'}
                             </Button>
                         </form>
                     )}
 
-                    <div className="mt-6 text-center text-sm text-gray-500">
+                    <div className="mt-8 text-center text-sm font-medium text-gray-500">
                         Don't have an account?{' '}
-                        <Link to="/signup" className="text-solar-dark font-semibold hover:underline">
+                        <Link to="/signup" className="text-solar hover:text-[#00c958] font-bold tracking-wide transition-colors">
                             {t('signup')}
                         </Link>
                     </div>

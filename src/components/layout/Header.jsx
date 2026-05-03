@@ -94,7 +94,7 @@ export function Header({ title, rightAction }) {
     };
 
     return (
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 h-16 flex items-center justify-between shadow-sm">
+        <header className="sticky top-0 z-30 bg-gray-50/80 backdrop-blur-lg border-b border-gray-200 px-4 h-16 flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900 truncate max-w-[200px]">{title}</h1>
             <div className="flex items-center gap-3">
                 {rightAction}
@@ -103,21 +103,21 @@ export function Header({ title, rightAction }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("text-gray-500 relative transition-colors hover:bg-gray-100 rounded-full", showNotifications && "bg-gray-100 text-solar")}
+                        className={cn("text-gray-600 relative transition-colors hover:bg-gray-100 rounded-full", showNotifications && "bg-gray-100 text-solar")}
                         onClick={toggleNotifications}
                     >
                         <Bell className="h-5 w-5" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+                            <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                         )}
                     </Button>
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 animate-in slide-in-from-top-2 duration-200">
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-2xl shadow-black/50 z-50 animate-in slide-in-from-top-2 duration-200">
+                            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                                 <h3 className="font-semibold text-gray-900">Notifications</h3>
-                                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600">
+                                <button onClick={() => setShowNotifications(false)} className="text-gray-500 hover:text-gray-900">
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
@@ -128,8 +128,8 @@ export function Header({ title, rightAction }) {
                                     </div>
                                 ) : (
                                     notifications.map((notification) => (
-                                        <div key={notification.id} className={`p-4 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}>
-                                            <p className="text-sm text-gray-800">{notification.message}</p>
+                                        <div key={notification.id} className={`p-4 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors ${!notification.is_read ? 'bg-solar/5' : ''}`}>
+                                            <p className="text-sm text-gray-900/90">{notification.message}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                         </div>
                                     ))
