@@ -244,7 +244,7 @@ export default function TechnicianDashboard() {
                                         {activeTicket === ticket.id && (
                                             <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
                                                 <textarea
-                                                    className="w-full p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-white/30 focus:border-solar focus:ring-1 focus:ring-solar outline-none transition-all"
+                                                    className="w-full p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:border-solar focus:ring-1 focus:ring-solar outline-none transition-all"
                                                     placeholder="Technician remarks..."
                                                     rows="3"
                                                     value={completionData.remarks}

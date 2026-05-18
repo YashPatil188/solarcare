@@ -102,7 +102,7 @@ export default function Login() {
                                     <input
                                         type="email"
                                         required
-                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                         placeholder="you@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -117,7 +117,7 @@ export default function Login() {
                                     <input
                                         type="password"
                                         required
-                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -139,7 +139,7 @@ export default function Login() {
                                         type="tel"
                                         required
                                         disabled={otpSent}
-                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium disabled:opacity-50"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium disabled:opacity-50"
                                         placeholder="+91 9876543210"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
@@ -155,7 +155,7 @@ export default function Login() {
                                         <input
                                             type="text"
                                             required
-                                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium tracking-[0.5em] text-center"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium tracking-[0.5em] text-center"
                                             placeholder="••••••"
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value)}

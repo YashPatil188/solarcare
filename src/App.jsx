@@ -15,6 +15,8 @@ import Services from './pages/Services';
 import Reports from './pages/Reports';
 import AMC from './pages/AMC';
 import Account from './pages/Account';
+import AIChat from './pages/AIChat';
+import TicketTracker from './pages/TicketTracker';
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/amc" element={<AMC />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/ai-chat" element={<AIChat />} />
+              <Route path="/tickets" element={<TicketTracker />} />
             </Route>
 
             {/* Admin Routes */}

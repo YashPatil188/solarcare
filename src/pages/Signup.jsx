@@ -17,6 +17,8 @@ export default function Signup() {
     const { signUp } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isTechnician = searchParams.get('type') === 'technician';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -47,9 +49,7 @@ export default function Signup() {
             // Let's try the check.
 
             // Check Technician Bypass (Secret)
-            const [searchParams] = useSearchParams();
-            const isTechnician = searchParams.get('type') === 'technician';
-
+            // Check Technician Bypass (Secret)
             if (!isTechnician) {
                 const { data: customer, error: fetchError } = await import('../lib/supabase').then(m =>
                     m.supabase.from('customers_master').select('status').eq('email', email).single()
@@ -114,7 +114,7 @@ export default function Signup() {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="John Doe"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -129,7 +129,7 @@ export default function Signup() {
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="you@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -144,7 +144,7 @@ export default function Signup() {
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="+91 98765 43210"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
@@ -159,7 +159,7 @@ export default function Signup() {
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-white/30 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}

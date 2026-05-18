@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // [NEW]
-import { Zap, Sun, Battery, ArrowRight, Loader2 } from 'lucide-react';
+import { Zap, Sun, Battery, ArrowRight, Loader2, Bot, Ticket } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -162,6 +162,32 @@ export default function CustomerDashboard() {
                         </Card>
                     </>
                 )}
+
+                {/* AI Quick Access */}
+                <div className="grid grid-cols-2 gap-3">
+                    <Link to="/ai-chat">
+                        <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 border-0 hover:shadow-lg hover:shadow-indigo-200 transition-all hover:-translate-y-0.5 group">
+                            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                                <div className="h-11 w-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Bot className="h-5 w-5 text-white" />
+                                </div>
+                                <span className="text-white font-bold text-xs uppercase tracking-wider">AI Assistant</span>
+                                <span className="text-white/70 text-[10px]">Chat & Troubleshoot</span>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link to="/tickets">
+                        <Card className="bg-white hover:shadow-lg hover:shadow-solar/10 transition-all hover:-translate-y-0.5 group border-gray-200">
+                            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                                <div className="h-11 w-11 rounded-xl bg-solar-light flex items-center justify-center group-hover:scale-110 transition-transform border border-solar/20">
+                                    <Ticket className="h-5 w-5 text-solar" />
+                                </div>
+                                <span className="text-gray-900 font-bold text-xs uppercase tracking-wider">My Tickets</span>
+                                <span className="text-gray-400 text-[10px]">Track & Manage</span>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
 
                 {/* CTA */}
                 <Link to="/services">
