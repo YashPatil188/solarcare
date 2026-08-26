@@ -1,5 +1,8 @@
 {
   "appId": "com.nyvion.solarcare",
-  "appName": "solarcare",
-  "webDir": "dist"
+  "appName": "SolarCare",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
 }
