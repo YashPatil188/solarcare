@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, User, X } from 'lucide-react';
+import { Bell, User, X, CheckCheck } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -18,22 +18,30 @@ export function Header({ title, rightAction }) {
         if (user) {
             fetchNotifications();
 
-            // Subscribe to new notifications
+            // Real-time subscription to notifications table
             const channel = supabase
-                .channel('header_notifications')
+                .channel(`notifications_${user.id}`)
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
                     (payload) => {
-                        toast.info(payload.new.message);
-                        setNotifications(prev => [payload.new, ...prev]);
-                        setUnreadCount(prev => prev + 1);
+                        if (payload?.new) {
+                            toast.info(payload.new.message);
+                            setNotifications(prev => [payload.new, ...prev]);
+                            setUnreadCount(prev => prev + 1);
+                        }
                     }
                 )
                 .subscribe();
 
+            // Fallback poll every 10 seconds
+            const interval = setInterval(() => {
+                fetchNotifications();
+            }, 10000);
+
             return () => {
                 supabase.removeChannel(channel);
+                clearInterval(interval);
             };
         }
     }, [user]);
@@ -50,35 +58,34 @@ export function Header({ title, rightAction }) {
     }, []);
 
     async function fetchNotifications() {
+        if (!user) return;
         try {
             const { data, error } = await supabase
                 .from('notifications')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(15);
 
             if (error) throw error;
             setNotifications(data || []);
-            setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+            setUnreadCount(data?.filter(n => !(n.is_read || n.read)).length || 0);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         }
     }
 
     const markAsRead = async () => {
-        if (unreadCount === 0) return;
-
+        if (!user) return;
         try {
             const { error } = await supabase
                 .from('notifications')
-                .update({ is_read: true })
-                .eq('user_id', user.id)
-                .eq('is_read', false);
+                .update({ is_read: true, read: true })
+                .eq('user_id', user.id);
 
             if (error) throw error;
             setUnreadCount(0);
-            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true, read: true })));
         } catch (error) {
             console.error('Error marking notifications as read:', error);
         }
@@ -105,34 +112,41 @@ export function Header({ title, rightAction }) {
                         size="icon"
                         className={cn("text-gray-600 relative transition-colors hover:bg-gray-100 rounded-full", showNotifications && "bg-gray-100 text-solar")}
                         onClick={toggleNotifications}
+                        title="Notifications"
                     >
-                        <Bell className="h-5 w-5" />
+                        <Bell className="h-5 w-5 text-gray-700" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                            <span className="absolute top-1.5 right-1.5 h-3 w-3 bg-red-500 rounded-full border-2 border-white animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
                         )}
                     </Button>
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-2xl shadow-black/50 z-50 animate-in slide-in-from-top-2 duration-200">
-                            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                                <h3 className="font-semibold text-gray-900">Notifications</h3>
-                                <button onClick={() => setShowNotifications(false)} className="text-gray-500 hover:text-gray-900">
-                                    <X className="h-4 w-4" />
-                                </button>
+                        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl border border-gray-200 shadow-2xl z-50 animate-in slide-in-from-top-2 duration-200 overflow-hidden">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <Bell className="h-4 w-4 text-solar" />
+                                    <h3 className="font-extrabold text-gray-900 text-sm uppercase tracking-wider">Notifications</h3>
+                                </div>
+                                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
                             </div>
-                            <div className="max-h-[300px] overflow-y-auto">
+                            <div className="max-h-[320px] overflow-y-auto divide-y divide-gray-100">
                                 {notifications.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500 text-sm">
-                                        No notifications yet
+                                    <div className="p-8 text-center text-gray-400 text-xs font-medium tracking-wide">
+                                        No notifications yet.
                                     </div>
                                 ) : (
-                                    notifications.map((notification) => (
-                                        <div key={notification.id} className={`p-4 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors ${!notification.is_read ? 'bg-solar/5' : ''}`}>
-                                            <p className="text-sm text-gray-900/90">{notification.message}</p>
-                                            <p className="text-xs text-gray-400 mt-1">{new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
-                                    ))
+                                    notifications.map((notification) => {
+                                        const isUnread = !(notification.is_read || notification.read);
+                                        return (
+                                            <div key={notification.id} className={`p-4 hover:bg-gray-50 transition-colors ${isUnread ? 'bg-solar/5' : ''}`}>
+                                                <p className="text-xs font-medium text-gray-800 leading-relaxed">{notification.message}</p>
+                                                <p className="text-[10px] text-gray-400 mt-1 font-mono">
+                                                    {new Date(notification.created_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Clock, User, AlertTriangle, CheckCircle, Loader2, ArrowUpRight, MessageSquare } from 'lucide-react';
+import { Clock, User, AlertTriangle, CheckCircle, Loader2, ArrowUpRight, MessageSquare, Phone } from 'lucide-react';
+import { cleanPhone } from '../../utils/phone';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent } from '../ui/Card';
 
@@ -96,6 +97,40 @@ export function TicketCard({ ticket, onClick, index = 0 }) {
                         <div className="flex items-start gap-1.5 text-xs text-indigo-600 bg-indigo-50 rounded-lg px-2.5 py-1.5 border border-indigo-100">
                             <span className="font-medium">🤖 AI:</span>
                             <span className="line-clamp-1">{ticket.ai_diagnosis}</span>
+                        </div>
+                    )}
+
+                    {/* Assigned Technician Banner */}
+                    {ticket.technician && (
+                        <div className="bg-solar/10 border border-solar/30 rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="h-9 w-9 rounded-full bg-white border-2 border-solar overflow-hidden shrink-0 shadow-sm">
+                                    <img
+                                        src={ticket.technician.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ticket.technician.name}`}
+                                        alt={ticket.technician.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[9px] font-black text-solar uppercase tracking-wider">ASSIGNED TECHNICIAN</span>
+                                        <span className="text-[9px] font-mono font-extrabold text-gray-800 bg-white px-1.5 py-0.2 rounded border border-solar/30 whitespace-nowrap">
+                                            ID: TECH-{(ticket.technician.id || '4102').replaceAll('-', '').slice(0, 4).toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <p className="font-extrabold text-gray-900 truncate text-xs">{ticket.technician.name || 'Solar Care Engineer'}</p>
+                                </div>
+                            </div>
+
+                            {ticket.technician.phone && (
+                                <a
+                                    href={`tel:${cleanPhone(ticket.technician.phone)}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="bg-solar text-white px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold flex items-center gap-1 hover:bg-solar-dark transition-all shrink-0 uppercase tracking-wider shadow-sm"
+                                >
+                                    <Phone className="w-3 h-3" /> Call
+                                </a>
+                            )}
                         </div>
                     )}
 

@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // [NEW]
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { User, Mail, Lock, Phone } from 'lucide-react';
+import { Mail, Lock, ShieldCheck } from 'lucide-react';
 
 export default function Signup() {
-    const { t } = useTranslation(); // [NEW]
-    const [name, setName] = useState('');
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [phone, setPhone] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const { signUp } = useAuth();
     const { toast } = useToast();
@@ -22,64 +21,21 @@ export default function Signup() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (password !== confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            // 1. Check if user is pre-registered and verified in Master List
-            // We use the new customerService logic or direct supabase here suitable for public access?
-            // Since RLS might block public-ish access, we might need a function or allow reading email/status publicly. 
-            // For now, assuming RLS allows 'select' on customers_master for authenticated users? 
-            // Wait, this is SIGNUP, so user is NOT authenticated yet.
-            // WE NEED RLS POLICY: allow SELECT on customers_master for anon/public? 
-            // Or better, we just try to sign up and let a Database Trigger handle it? 
-            // But strict requirement is "Pre-registered...".
-            // Let's use a specialized RPC or just allow public read on `customers_master` (email, status) 
-            // OR checks happen effectively if we trust the Admin's pre-registration.
-
-            // NOTE: To make this robust without exposing all customer data, we usually use an Edge Function.
-            // For this project, we will check strictly.
-
-            // Ideally:
-            // const { data: customer } = await supabase.from('customers_master').select('status').eq('email', email).single();
-            // if (!customer) throw new Error("Email not found in pre-registration list. Please contact Admin.");
-            // if (customer.status !== 'verified' && customer.status !== 'active') throw new Error("Your account is not verified yet.");
-
-            // However, due to RLS, anon key might not be able to read customers_master.
-            // I will implement the check, but I must also assume the user might have run the SQL to allow this or I need to update migration.
-            // Let's try the check.
-
-            // Check Technician Bypass (Secret)
-            // Check Technician Bypass (Secret)
-            if (!isTechnician) {
-                const { data: customer, error: fetchError } = await import('../lib/supabase').then(m =>
-                    m.supabase.from('customers_master').select('status').eq('email', email).single()
-                );
-
-                if (fetchError || !customer) {
-                    // If we can't find them, it might be RLS or they don't exist.
-                    // For safety in this demo, we might skip if RLS fails, but let's try to enforce.
-                    // Actually, if we can't read, we can't enforce securely on client.
-                    // But let's add the logic assuming policies allow it or user will fix policies.
-                    // throw new Error("Account not found or not verified. Please contact support.");
-
-                    // BETTER APPROACH FOR MVP: Just let them sign up, but if they aren't in master list, they get an empty dashboard?
-                    // User asked for "Controlled Onboarding".
-                    // Let's throwing the error if we confirm they aren't there.
-                }
-
-                // If we found them but not verified
-                if (customer && customer.status === 'pre_registered') {
-                    throw new Error("Your account is pending verification. Please wait for Admin approval.");
-                }
-            }
-
-            await signUp(email, password, {
-                name,
-                phone,
+            await signUp(email.trim().toLowerCase(), password, {
+                email: email.trim().toLowerCase(),
                 role: isTechnician ? 'technician' : 'customer'
             });
 
-            toast.success(isTechnician ? 'Technician account created!' : 'Account created successfully!');
+            toast.success(isTechnician ? 'Technician account activated!' : 'Account activated successfully!');
             navigate('/');
         } catch (err) {
             console.error(err);
@@ -94,72 +50,45 @@ export default function Signup() {
             <Card className="w-full max-w-md bg-white shadow-md shadow-solar/10 border border-gray-200 rounded-3xl">
                 <CardHeader className="text-center space-y-3 pb-2">
                     <div className="mx-auto h-16 w-16 bg-solar-light rounded-2xl border border-solar/30 flex items-center justify-center shadow-md shadow-solar/10">
-                        <User className="h-7 w-7 text-solar" />
+                        <ShieldCheck className="h-8 w-8 text-solar" />
                     </div>
-                    <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">{t('create_account')}</CardTitle>
-                    <p className="text-sm font-medium text-gray-500">{t('join_solarcare')}</p>
+                    <CardTitle className="text-2xl font-black text-gray-900 tracking-tight">
+                        {isTechnician ? 'ACTIVATE TECHNICIAN ACCOUNT' : 'ACTIVATE ACCOUNT'}
+                    </CardTitle>
+                    <p className="text-xs font-medium text-gray-500">
+                        Enter your registered email address & set your password to sign in.
+                    </p>
                 </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-3 rounded-xl mb-4">
-                        <strong>Note:</strong> You must be an existing verified customer to sign up.
-                        Use the email address registered with your installation.
+                <CardContent className="pt-4">
+                    <div className="bg-solar/10 border border-solar/20 text-solar-dark text-xs p-3 rounded-xl mb-4 font-medium">
+                        <strong>Registered User Activation:</strong> Your profile details were pre-configured by Administrator. Simply enter your registered email and choose a password.
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-3">
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t('full_name')}</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
-                                    placeholder="John Doe"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Email</label>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">REGISTERED EMAIL</label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
-                                    placeholder="you@example.com"
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium text-sm"
+                                    placeholder="user@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone</label>
-                            <div className="relative">
-                                <Phone className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-                                <input
-                                    type="tel"
-                                    required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
-                                    placeholder="+91 98765 43210"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Password</label>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">CREATE PASSWORD</label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium"
+                                    minLength={6}
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium text-sm"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -167,15 +96,31 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="w-full text-lg h-14 mt-6 bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/10" disabled={loading} isLoading={loading}>
-                            {t('create_account')}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">CONFIRM PASSWORD</label>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                                <input
+                                    type="password"
+                                    required
+                                    minLength={6}
+                                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-1 focus:ring-solar focus:border-solar outline-none transition-all font-medium text-sm"
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <Button type="submit" className="w-full text-base h-12 mt-4 bg-solar hover:bg-solar-dark text-white font-bold uppercase shadow-md" disabled={loading} isLoading={loading}>
+                            ACTIVATE & SIGN IN
                         </Button>
                     </form>
 
-                    <div className="mt-8 text-center text-sm font-medium text-gray-500">
-                        {t('already_have_account')}{' '}
-                        <Link to="/login" className="text-solar hover:text-[#00c958] font-bold tracking-wide transition-colors">
-                            {t('signin')}
+                    <div className="mt-6 text-center text-xs font-medium text-gray-500">
+                        Already set up your account?{' '}
+                        <Link to="/login" className="text-solar hover:text-[#00c958] font-bold tracking-wide transition-colors uppercase">
+                            SIGN IN HERE
                         </Link>
                     </div>
                 </CardContent>

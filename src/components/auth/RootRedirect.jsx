@@ -17,11 +17,9 @@ export default function RootRedirect() {
         return <Navigate to="/login" replace />;
     }
 
-    if (profile) {
-        if (profile.role === 'admin') return <Navigate to="/admin-dashboard" replace />;
-        if (profile.role === 'technician') return <Navigate to="/technician-dashboard" replace />;
-        return <Navigate to="/customer-dashboard" replace />;
-    }
+    const activeRole = profile?.role || user?.user_metadata?.role || 'customer';
 
-    return <div className="min-h-screen flex items-center justify-center">Loading profile...</div>;
+    if (activeRole === 'admin') return <Navigate to="/admin-dashboard" replace />;
+    if (activeRole === 'technician') return <Navigate to="/technician-dashboard" replace />;
+    return <Navigate to="/customer-dashboard" replace />;
 }

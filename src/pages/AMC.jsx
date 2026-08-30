@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShieldCheck, Calendar, CheckCircle2, FileText, History, ArrowRight, AlertCircle, ShoppingBag, Sparkles, Lightbulb } from 'lucide-react';
+import { ShieldCheck, Calendar, CheckCircle2, FileText, ArrowRight, AlertCircle, ShoppingBag, Sparkles, CreditCard, Smartphone, Building, Lock, Loader2, CheckCircle, PlusCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -16,9 +16,16 @@ export default function AMC() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [activeSubscription, setActiveSubscription] = useState(null);
+    const [allSubscriptions, setAllSubscriptions] = useState([]);
     const [plans, setPlans] = useState([]);
     const [selectedPlanId, setSelectedPlanId] = useState(null);
     const [view, setView] = useState('dashboard'); // 'dashboard' or 'shop'
+    
+    // Payment Modal State
+    const [purchasingPlan, setPurchasingPlan] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi', 'card', 'netbanking'
+    const [upiId, setUpiId] = useState('solar.care@upi');
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     // Recommendation State
     const [recommendation, setRecommendation] = useState(null);
@@ -41,21 +48,25 @@ export default function AMC() {
             if (plansError) throw plansError;
             setPlans(plansData || []);
 
-            // 2. Fetch User's Active Subscription
+            // 2. Fetch User's Subscriptions ordered chronologically by start_date / end_date
             const { data: subData, error: subError } = await supabase
                 .from('amc_subscriptions')
                 .select('*, amc_plans(*)')
                 .eq('user_id', user.id)
-                .in('status', ['active', 'pending_payment'])
-                .order('created_at', { ascending: false })
-                .maybeSingle();
+                .order('end_date', { ascending: true });
 
             if (subError) throw subError;
 
-            setActiveSubscription(subData);
-            if (!subData) {
+            const subs = subData || [];
+            setAllSubscriptions(subs);
+            
+            // Find active running sub or furthest sub
+            const now = new Date();
+            const active = subs.find(s => new Date(s.start_date || s.created_at) <= now && new Date(s.end_date) >= now);
+            setActiveSubscription(active || subs[subs.length - 1] || null);
+
+            if (subs.length === 0) {
                 setView('shop');
-                // Only fetch system for recommendation if in Shop mode (no active plan)
                 fetchSystemAndRecommend(plansData);
             } else {
                 setView('dashboard');
@@ -63,19 +74,17 @@ export default function AMC() {
 
         } catch (error) {
             console.error('Error fetching AMC data:', error);
-            // toast.error('Failed to load AMC data');
         } finally {
             setLoading(false);
         }
     };
 
     const fetchSystemAndRecommend = async (availablePlans) => {
-        // Fetch System Data
         const { data: system } = await supabase
             .from('solar_systems')
             .select('*')
             .eq('customer_id', user.id)
-            .single();
+            .maybeSingle();
 
         if (system) {
             setUserSystem(system);
@@ -85,28 +94,82 @@ export default function AMC() {
         }
     };
 
-    const handleBuyPlan = async (plan) => {
+    const openPaymentModal = (plan) => {
+        setPurchasingPlan(plan);
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!purchasingPlan) return;
+        setIsProcessingPayment(true);
+
         try {
-            const { error } = await supabase
+            // Simulate 1.2 second payment processing delay
+            await new Promise(res => setTimeout(res, 1200));
+
+            // Calculate dates using Jio-style extension stacking logic (max existing end_date)
+            let startDate = new Date();
+            if (allSubscriptions && allSubscriptions.length > 0) {
+                const validDates = allSubscriptions
+                    .map(s => new Date(s.end_date))
+                    .filter(d => !isNaN(d) && d > new Date());
+                if (validDates.length > 0) {
+                    startDate = new Date(Math.max(...validDates));
+                }
+            }
+
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + purchasingPlan.duration_months);
+
+            // 1. Create & Auto-Activate AMC Subscription in Supabase
+            const { error: subErr } = await supabase
                 .from('amc_subscriptions')
                 .insert({
                     user_id: user.id,
-                    plan_id: plan.id,
-                    status: 'pending_payment',
-                    services_total: JSON.parse(plan.features).length // Rough estimate or specific logic
+                    plan_id: purchasingPlan.id,
+                    start_date: startDate.toISOString(),
+                    end_date: endDate.toISOString(),
+                    status: 'active',
+                    services_total: 4 * (purchasingPlan.duration_months / 12),
+                    services_used: 0,
+                    payment_reference: `PAY_${Date.now().toString().slice(-6)}_${paymentMethod.toUpperCase()}`
                 });
 
-            if (error) throw error;
+            if (subErr) throw subErr;
 
-            toast.success(t('amc_request_submitted') || 'Request Submitted! Waiting for approval.');
-            fetchAMCData(); // Refresh to see pending state
+            // 2. Fetch or update Solar System AMC valid_until
+            const { data: systemData } = await supabase
+                .from('solar_systems')
+                .select('id')
+                .eq('customer_id', user.id)
+                .maybeSingle();
+
+            if (systemData?.id) {
+                await supabase
+                    .from('solar_systems')
+                    .update({
+                        amc_status: 'active',
+                        amc_valid_until: endDate.toISOString()
+                    })
+                    .eq('id', systemData.id);
+            }
+
+            toast.success(`🎉 AMC Extended Successfully! Valid until ${endDate.toLocaleDateString()}`);
+            setPurchasingPlan(null);
+            fetchAMCData();
+
         } catch (error) {
-            console.error('Error buying plan:', error);
-            toast.error('Failed to submit request');
+            console.error('Error completing payment:', error);
+            toast.error('Payment processing failed: ' + (error.message || 'Check connection'));
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
-    if (loading) return <div className="p-10 text-center">Loading AMC Data...</div>;
+    if (loading) return <div className="p-10 text-center flex items-center justify-center gap-2"><Loader2 className="w-6 h-6 animate-spin text-solar" /> Loading AMC Subscriptions...</div>;
+
+    const farthestEndDate = allSubscriptions.length > 0 
+        ? new Date(Math.max(...allSubscriptions.map(s => new Date(s.end_date))))
+        : null;
 
     return (
         <div className="space-y-6 pb-20 bg-gray-50 min-h-screen">
@@ -114,13 +177,12 @@ export default function AMC() {
 
             <div className="px-4 space-y-6">
 
-                {/* --- 1. DASHBOARD VIEW (Active/Pending Subscription) --- */}
-                {view === 'dashboard' && activeSubscription && (
+                {/* --- 1. DASHBOARD VIEW (Active & Queued Subscriptions) --- */}
+                {view === 'dashboard' && (
                     <>
-                        {/* AMC Status Card */}
-                        <Card className={`overflow-hidden relative border border-gray-200 ${activeSubscription.status === 'active' ? 'bg-gray-50 shadow-md shadow-solar/10' : 'bg-white'}`}>
-                            {/*  Background decorative user provided style */}
-                            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        {/* Overall Coverage Summary Card */}
+                        <Card className="overflow-hidden relative border border-solar/30 bg-gradient-to-br from-solar/5 to-white shadow-md">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                                 <ShieldCheck className="h-40 w-40 text-solar" />
                             </div>
 
@@ -128,136 +190,136 @@ export default function AMC() {
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Annual Maintenance Contract</p>
-                                        <h2 className="text-2xl font-black text-gray-900 tracking-wide">{activeSubscription.amc_plans?.name}</h2>
+                                        <h2 className="text-2xl font-black text-gray-900 tracking-wide">
+                                            {activeSubscription?.amc_plans?.name || 'Solar Care Plan'}
+                                        </h2>
                                     </div>
-                                    <Badge variant={activeSubscription.status === 'active' ? 'success' : 'outline'} className={`px-3 py-1 ${activeSubscription.status !== 'active' ? 'text-gray-600 border-gray-300' : ''}`}>
-                                        {activeSubscription.status === 'active' ? 'Active' : 'Pending Approval'}
+                                    <Badge className="bg-emerald-500 text-white font-bold uppercase px-3 py-1 shadow-sm">
+                                        Protected
                                     </Badge>
                                 </div>
 
-                                {activeSubscription.status === 'active' ? (
-                                    <>
-                                        <div className="space-y-4 mb-6">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500 font-medium flex items-center gap-2">
-                                                    <Calendar className="h-4 w-4" /> {t('amc_valid_until')}
-                                                </span>
-                                                <span className="font-bold text-gray-900 tracking-wide">
-                                                    {new Date(activeSubscription.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500 font-medium flex items-center gap-2">
-                                                    <CheckCircle2 className="h-4 w-4" /> {t('amc_services_left')}
-                                                </span>
-                                                <span className="font-bold text-gray-900 tracking-wide">
-                                                    {activeSubscription.services_total - activeSubscription.services_used} / {activeSubscription.services_total}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <Button
-                                            className="w-full bg-solar hover:bg-solar-dark text-white font-bold py-6 rounded-xl shadow-md shadow-solar/10 tracking-wide"
-                                            onClick={() => setView('shop')}
-                                        >
-                                            {t('amc_renew')}
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <div className="py-4">
-                                        <p className="text-sm text-gray-600 font-medium flex items-center gap-2">
-                                            <AlertCircle className="w-4 h-4 text-orange-400" />
-                                            Admin verification in progress.
-                                        </p>
+                                <div className="space-y-3 mb-6">
+                                    <div className="flex items-center justify-between text-sm bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                        <span className="text-gray-600 font-medium flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-solar" /> Total Coverage Valid Until
+                                        </span>
+                                        <span className="font-extrabold text-solar tracking-wide">
+                                            {farthestEndDate ? farthestEndDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
+                                        </span>
                                     </div>
-                                )}
+                                    {activeSubscription && (
+                                        <div className="flex items-center justify-between text-sm bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                            <span className="text-gray-600 font-medium flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Visits Remaining
+                                            </span>
+                                            <span className="font-bold text-gray-900 tracking-wide">
+                                                {(activeSubscription.services_total || 4) - (activeSubscription.services_used || 0)} / {activeSubscription.services_total || 4}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Button
+                                        className="flex-1 bg-solar hover:bg-solar-dark text-white font-bold py-3 rounded-xl shadow-md gap-2"
+                                        onClick={() => setView('shop')}
+                                    >
+                                        <PlusCircle className="w-4 h-4" /> Extend AMC / Add Next Plan
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
 
-                        {/* Warranty Details */}
-                        <section>
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{t('warranty_details')}</h3>
-                            <div className="space-y-3">
-                                {[
-                                    { item: 'Solar Panels', years: '25 Years', end: '2049' },
-                                    { item: 'Inverter', years: '10 Years', end: '2034' },
-                                    { item: 'Structure', years: '5 Years', end: '2029' },
-                                ].map((w, i) => (
-                                    <Card key={i} className="bg-white border border-gray-200 hover:border-gray-300 transition-all">
-                                        <CardContent className="p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-solar">
-                                                    <ShieldCheck className="h-5 w-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-sm tracking-wide">{w.item}</p>
-                                                    <p className="text-xs text-gray-500 font-medium">{w.years} Warranty</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">Expires</p>
-                                                <p className="text-sm font-bold text-gray-900">{w.end}</p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                        {/* Jio-Style Active & Queued Plans Timeline List */}
+                        <section className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-extrabold text-gray-700 uppercase tracking-wider">Active & Queued AMC Plans</h3>
+                                <span className="text-xs font-bold text-solar">
+                                    {allSubscriptions.length} {allSubscriptions.length === 1 ? 'Plan' : 'Plans'} Total
+                                </span>
                             </div>
-                        </section>
 
-                        {/* History */}
-                        <section>
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{t('history')}</h3>
-                            <Card className="bg-white border border-gray-200">
-                                <CardContent className="p-0 divide-y divide-white/5">
-                                    <div className="p-8 text-center text-gray-400 text-sm font-medium tracking-wide">
-                                        No previous history found.
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-3">
+                                {allSubscriptions.map((sub, idx) => {
+                                    const startDate = new Date(sub.start_date || sub.created_at);
+                                    const endDate = new Date(sub.end_date);
+                                    const now = new Date();
+
+                                    const isCurrentlyRunning = startDate <= now && endDate >= now;
+                                    const isQueuedFuture = startDate > now;
+
+                                    return (
+                                        <div key={sub.id || idx} className={`p-4 rounded-xl border transition-all ${isCurrentlyRunning ? 'bg-emerald-50/50 border-emerald-300 shadow-sm' : isQueuedFuture ? 'bg-amber-50/50 border-amber-300 shadow-sm' : 'bg-gray-50 border-gray-200'}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="font-extrabold text-gray-900 text-sm">{sub.amc_plans?.name || 'Solar Care Plan'}</h4>
+                                                        {isCurrentlyRunning && (
+                                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500 text-white uppercase tracking-wider shadow-sm">
+                                                                ACTIVE NOW
+                                                            </span>
+                                                        )}
+                                                        {isQueuedFuture && (
+                                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                                                <Clock className="w-3 h-3" /> QUEUED
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[11px] text-gray-500 mt-0.5 font-mono">Ref: {sub.payment_reference || 'MANUAL_ACTIVATION'}</p>
+                                                </div>
+                                                <span className="text-xs font-extrabold text-gray-900">
+                                                    {sub.amc_plans?.price ? `₹${sub.amc_plans.price.toLocaleString()}` : ''}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-2 border-t border-gray-200/60 text-xs font-medium text-gray-600">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5 text-solar" />
+                                                    <span>
+                                                        {startDate.toLocaleDateString()} &rarr; <span className="font-extrabold text-gray-900">{endDate.toLocaleDateString()}</span>
+                                                    </span>
+                                                </div>
+                                                <span className="text-[11px] font-bold text-gray-500">
+                                                    {isQueuedFuture ? `Activates on ${startDate.toLocaleDateString()}` : `Expires on ${endDate.toLocaleDateString()}`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </section>
                     </>
                 )}
 
-                {/* --- 2. SHOP VIEW (Select Plan) --- */}
-                {view === 'shop' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* --- 2. SHOP VIEW (Select & Buy Plan) --- */}
+                {(view === 'shop' || allSubscriptions.length === 0) && (
+                    <div className="space-y-6">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900 tracking-wide uppercase">Select a Plan</h2>
-                            {activeSubscription && (
-                                <Button variant="ghost" size="sm" onClick={() => setView('dashboard')} className="text-gray-500 hover:text-gray-900">Cancel</Button>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900 uppercase">Choose Solar Care AMC Plan</h2>
+                                {farthestEndDate && <p className="text-xs text-solar font-bold mt-0.5">✨ New plan will queue & extend after your current AMC ends on {farthestEndDate.toLocaleDateString()}</p>}
+                            </div>
+                            {allSubscriptions.length > 0 && (
+                                <Button variant="ghost" size="sm" onClick={() => setView('dashboard')} className="text-gray-500">Back</Button>
                             )}
                         </div>
 
                         {/* AI Recommendation Card */}
                         {recommendation && (
-                            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-5 text-gray-900 shadow-xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-20">
-                                    <Sparkles className="h-32 w-32 animate-pulse" />
-                                </div>
+                            <div className="bg-gradient-to-r from-solar/90 to-solar-dark rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Badge className="bg-white/20 text-gray-900 border-0 backdrop-blur-sm">
+                                        <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
                                             <Sparkles className="w-3 h-3 mr-1" /> AI Recommended
                                         </Badge>
-                                        <span className="text-indigo-100 text-xs font-medium uppercase tracking-wider">
-                                            {recommendation.section}
-                                        </span>
                                     </div>
-
                                     <h3 className="text-lg font-bold mb-1">
-                                        {recommendation.tier} Plan is Best for You
+                                        {recommendation.tier} Plan is Best for Your System
                                     </h3>
-                                    <p className="text-indigo-100 text-sm mb-4 leading-relaxed">
-                                        {recommendation.message} {recommendation.reasoning}
+                                    <p className="text-white/90 text-xs mb-3">
+                                        {recommendation.message}
                                     </p>
-
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {recommendation.highlights.map((h, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-xs text-indigo-50">
-                                                <CheckCircle2 className="w-3 h-3 text-green-300" /> {h}
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                             </div>
                         )}
@@ -266,48 +328,35 @@ export default function AMC() {
                             {plans.map((plan) => {
                                 const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
                                 const benefits = typeof plan.benefits === 'string' ? JSON.parse(plan.benefits) : plan.benefits;
-                                const isSelected = selectedPlanId === plan.id;
-                                const isRecommended = recommendation?.recommendedPlanId === plan.id;
 
                                 return (
-                                    <Card
-                                        key={plan.id}
-                                        className={`cursor-pointer transition-all duration-300 relative bg-white ${isSelected ? 'ring-2 ring-solar border-solar shadow-md shadow-solar/10 bg-gray-50' : 'border-gray-200 hover:border-solar/50'} ${isRecommended ? 'border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : ''}`}
-                                        onClick={() => setSelectedPlanId(plan.id)}
-                                    >
-                                        {isRecommended && (
-                                            <div className="absolute top-0 right-0 bg-indigo-600 text-gray-900 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl z-10 shadow-md tracking-wider">
-                                                Recommended
-                                            </div>
-                                        )}
-
+                                    <Card key={plan.id} className="bg-white border border-gray-200 hover:border-solar/40 transition-all shadow-sm">
                                         <CardHeader className="pb-3">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <CardTitle className="text-xl font-black text-gray-900 tracking-wide">{plan.name}</CardTitle>
-                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">{plan.duration_months} Months Coverage</p>
+                                                    <CardTitle className="text-lg font-black text-gray-900">{plan.name}</CardTitle>
+                                                    <p className="text-xs font-bold text-gray-500 uppercase mt-0.5">{plan.duration_months} Months Total Coverage</p>
                                                 </div>
-                                                <Badge variant="secondary" className="text-lg px-3 py-1 bg-solar text-white font-black shadow-md shadow-solar/10">
+                                                <Badge className="text-base px-3 py-1 bg-solar text-white font-black shadow-sm">
                                                     ₹{plan.price.toLocaleString()}
                                                 </Badge>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Services Included</p>
+                                            <div className="space-y-3">
+                                                <div className="space-y-1.5">
                                                     {features.map((f, i) => (
-                                                        <div key={i} className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                                                            <CheckCircle2 className="w-4 h-4 text-solar shrink-0" /> {f}
+                                                        <div key={i} className="flex items-center gap-2 text-xs text-gray-700 font-medium">
+                                                            <CheckCircle2 className="w-3.5 h-3.5 text-solar shrink-0" /> {f}
                                                         </div>
                                                     ))}
                                                 </div>
 
-                                                {benefits && benefits.length > 0 && (
-                                                    <div className="space-y-2 pt-3 border-t border-dashed border-gray-200">
-                                                        <p className="text-[10px] font-bold text-solar uppercase tracking-wider">Extra Benefits</p>
+                                                {benefits && (
+                                                    <div className="pt-2 border-t border-gray-100 space-y-1">
+                                                        <p className="text-[10px] font-bold text-solar uppercase">Included Perks</p>
                                                         {benefits.map((b, i) => (
-                                                            <div key={i} className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                                                            <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
                                                                 <ShoppingBag className="w-3 h-3 text-solar shrink-0" /> {b}
                                                             </div>
                                                         ))}
@@ -315,19 +364,123 @@ export default function AMC() {
                                                 )}
 
                                                 <Button
-                                                    className={`w-full mt-4 font-bold text-[15px] h-12 transition-all ${isSelected ? 'bg-solar hover:bg-solar-dark text-white shadow-md shadow-solar/10' : 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200'} ${isRecommended && !isSelected ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleBuyPlan(plan);
-                                                    }}
+                                                    className="w-full mt-3 font-bold bg-solar hover:bg-solar-dark text-white h-11 shadow-md gap-2"
+                                                    onClick={() => openPaymentModal(plan)}
                                                 >
-                                                    {isSelected ? 'Buy Now' : isRecommended ? 'Select Recommended Plan' : 'Select Plan'}
+                                                    <CreditCard className="w-4 h-4" />
+                                                    Buy & Queue Plan (₹{plan.price.toLocaleString()})
                                                 </Button>
                                             </div>
                                         </CardContent>
                                     </Card>
                                 );
                             })}
+                        </div>
+                    </div>
+                )}
+
+                {/* --- 3. DUMMY PAYMENT GATEWAY MODAL --- */}
+                {purchasingPlan && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                                <div>
+                                    <h3 className="font-extrabold text-gray-900 text-lg flex items-center gap-2">
+                                        <Lock className="w-4 h-4 text-emerald-500" />
+                                        Secure Dummy Payment Gateway
+                                    </h3>
+                                    <p className="text-xs text-gray-500 mt-0.5">Automated Plan Queueing & Date Extension</p>
+                                </div>
+                                <button onClick={() => setPurchasingPlan(null)} className="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                            </div>
+
+                            {/* Plan Summary Box */}
+                            <div className="bg-solar-light/40 border border-solar/20 p-4 rounded-xl flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold text-gray-900 text-sm">{purchasingPlan.name}</p>
+                                    <p className="text-xs text-gray-500">{purchasingPlan.duration_months} Months Coverage</p>
+                                </div>
+                                <span className="text-xl font-black text-solar">₹{purchasingPlan.price.toLocaleString()}</span>
+                            </div>
+
+                            {/* Payment Options Tabs */}
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold uppercase text-gray-600">Select Payment Method</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('upi')}
+                                        className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 text-xs font-bold transition-all ${paymentMethod === 'upi' ? 'border-solar bg-solar/10 text-solar' : 'border-gray-200 text-gray-600'}`}
+                                    >
+                                        <Smartphone className="w-5 h-5" /> UPI / QR
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 text-xs font-bold transition-all ${paymentMethod === 'card' ? 'border-solar bg-solar/10 text-solar' : 'border-gray-200 text-gray-600'}`}
+                                    >
+                                        <CreditCard className="w-5 h-5" /> Card
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('netbanking')}
+                                        className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 text-xs font-bold transition-all ${paymentMethod === 'netbanking' ? 'border-solar bg-solar/10 text-solar' : 'border-gray-200 text-gray-600'}`}
+                                    >
+                                        <Building className="w-5 h-5" /> Net Banking
+                                    </button>
+                                </div>
+
+                                {paymentMethod === 'upi' && (
+                                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase">UPI VPA Address</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg text-gray-900 focus:border-solar outline-none font-mono"
+                                            value={upiId}
+                                            onChange={(e) => setUpiId(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+
+                                {paymentMethod === 'card' && (
+                                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                                        <input type="text" placeholder="Card Number (4000 1234 5678 9010)" className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg outline-none font-mono" />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="text" placeholder="MM/YY" className="p-2.5 text-sm bg-white border border-gray-200 rounded-lg outline-none font-mono" />
+                                            <input type="password" placeholder="CVV" maxLength={3} className="p-2.5 text-sm bg-white border border-gray-200 rounded-lg outline-none font-mono" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {paymentMethod === 'netbanking' && (
+                                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                        <select className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg outline-none">
+                                            <option>HDFC Bank</option>
+                                            <option>State Bank of India (SBI)</option>
+                                            <option>ICICI Bank</option>
+                                            <option>Axis Bank</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button
+                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 shadow-lg gap-2 text-base"
+                                onClick={handleConfirmPayment}
+                                disabled={isProcessingPayment}
+                            >
+                                {isProcessingPayment ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Processing Dummy Payment...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="w-5 h-5" />
+                                        Pay ₹{purchasingPlan.price.toLocaleString()} & Activate AMC
+                                    </>
+                                )}
+                            </Button>
                         </div>
                     </div>
                 )}

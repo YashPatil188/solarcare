@@ -66,7 +66,8 @@ const resources = {
             "new_chat": "New Chat",
             "open_tickets": "Open",
             "resolved_tickets": "Resolved",
-            "escalated_tickets": "Escalated"
+            "escalated_tickets": "Escalated",
+            "request_service": "Request Service"
         }
     },
     hi: {
@@ -132,7 +133,8 @@ const resources = {
             "new_chat": "नई चैट",
             "open_tickets": "खुला",
             "resolved_tickets": "हल किया",
-            "escalated_tickets": "बढ़ाया गया"
+            "escalated_tickets": "बढ़ाया गया",
+            "request_service": "सेवा अनुरोध करें"
         }
     },
     mr: {

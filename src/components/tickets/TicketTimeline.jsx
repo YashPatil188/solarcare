@@ -1,23 +1,28 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, Circle, Clock, AlertTriangle, User, ArrowRight } from 'lucide-react';
+import { CheckCircle, Circle, Clock, AlertTriangle, User, Phone } from 'lucide-react';
 
 const steps = [
-    { key: 'open', label: 'Opened', matchStatuses: ['open', 'raised'] },
-    { key: 'assigned', label: 'Assigned', matchStatuses: ['assigned'] },
-    { key: 'in_progress', label: 'In Progress', matchStatuses: ['in_progress'] },
-    { key: 'completed', label: 'Completed', matchStatuses: ['completed', 'resolved', 'closed'] },
+    { key: 'open', label: 'Ticket Created', matchStatuses: ['open', 'raised'], timeKey: 'created_at' },
+    { key: 'assigned', label: 'Technician Assigned', matchStatuses: ['assigned'], timeKey: 'assigned_at' },
+    { key: 'in_progress', label: 'Work In Progress', matchStatuses: ['in_progress'], timeKey: 'started_at' },
+    { key: 'completed', label: 'Service Completed', matchStatuses: ['completed', 'resolved', 'closed'], timeKey: 'completed_at' },
 ];
 
 export function TicketTimeline({ ticket }) {
     const currentStatus = ticket.status;
     const isEscalated = ticket.escalated || currentStatus === 'escalated';
 
-    // Determine which step is currently active
     const currentStepIndex = steps.findIndex(s => s.matchStatuses.includes(currentStatus));
     const activeIndex = currentStepIndex >= 0 ? currentStepIndex : (isEscalated ? -1 : 0);
 
+    const techInfo = ticket.technician || (ticket.assigned_technician_id ? {
+        name: ticket.technician_name || 'Assigned Technician',
+        phone: ticket.technician_phone || '+91 98765 43210',
+        avatar_url: ticket.technician_avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech'
+    } : null);
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-5">
             {/* Escalation Warning */}
             {isEscalated && (
                 <motion.div
@@ -30,24 +35,58 @@ export function TicketTimeline({ ticket }) {
                 </motion.div>
             )}
 
-            {/* Timeline Steps */}
-            <div className="relative">
+            {/* Assigned Technician Card */}
+            {techInfo && (
+                <div className="bg-solar/10 border border-solar/30 rounded-2xl p-4 flex items-center justify-between shadow-sm gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-12 w-12 rounded-full bg-white border-2 border-solar overflow-hidden shrink-0 shadow-sm">
+                            <img src={techInfo.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${techInfo.name}`} alt={techInfo.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-black text-solar uppercase tracking-wider">ASSIGNED TECHNICIAN</span>
+                                <span className="text-[10px] font-mono font-extrabold text-gray-800 bg-white px-2 py-0.5 rounded-md border border-solar/30 shadow-2xs whitespace-nowrap">
+                                    ID: {(() => {
+                                        if (techInfo.id && techInfo.id !== 'assigned') return `TECH-${techInfo.id.replaceAll('-', '').slice(0, 4).toUpperCase()}`;
+                                        if (techInfo.phone) return `TECH-${techInfo.phone.replace(/[^0-9]/g, '').slice(-4)}`;
+                                        return 'TECH-4102';
+                                    })()}
+                                </span>
+                            </div>
+                            <p className="text-sm font-extrabold text-gray-900 truncate">
+                                {techInfo.name && techInfo.name !== 'Assigned Technician' ? techInfo.name : 'Solar Care Engineer'}
+                            </p>
+                        </div>
+                    </div>
+                    {techInfo.phone && (
+                        <a
+                            href={`tel:${techInfo.phone}`}
+                            className="bg-solar text-white px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-md hover:bg-solar-dark transition-all shrink-0 uppercase tracking-wider"
+                        >
+                            <Phone className="w-3.5 h-3.5" /> Call Tech
+                        </a>
+                    )}
+                </div>
+            )}
+
+            {/* Timeline Steps with Detailed Timestamps */}
+            <div className="relative pl-1">
                 {steps.map((step, i) => {
                     const isComplete = i <= activeIndex;
                     const isCurrent = i === activeIndex;
-                    const isPending = i > activeIndex;
+                    const timestamp = ticket[step.timeKey] || (i === 0 ? ticket.created_at : null);
 
                     return (
                         <motion.div
                             key={step.key}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="flex items-start gap-3 relative"
+                            transition={{ delay: i * 0.08 }}
+                            className="flex items-start gap-3 relative pb-6 last:pb-0"
                         >
                             {/* Connector Line */}
                             {i < steps.length - 1 && (
-                                <div className={`absolute left-3.5 top-8 w-0.5 h-8 ${
+                                <div className={`absolute left-3.5 top-7 w-0.5 h-full ${
                                     isComplete && !isCurrent ? 'bg-solar' : 'bg-gray-200'
                                 }`} />
                             )}
@@ -58,11 +97,7 @@ export function TicketTimeline({ ticket }) {
                                     <div className={`h-7 w-7 rounded-full flex items-center justify-center ${
                                         isCurrent ? 'bg-solar text-white ring-4 ring-solar/20' : 'bg-solar text-white'
                                     }`}>
-                                        {isCurrent ? (
-                                            <div className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" />
-                                        ) : (
-                                            <CheckCircle className="h-4 w-4" />
-                                        )}
+                                        <CheckCircle className="h-4 w-4" />
                                     </div>
                                 ) : (
                                     <div className="h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center">
@@ -72,20 +107,27 @@ export function TicketTimeline({ ticket }) {
                             </div>
 
                             {/* Step Content */}
-                            <div className={`pb-8 ${i === steps.length - 1 ? 'pb-0' : ''}`}>
-                                <p className={`text-sm font-bold ${
-                                    isComplete ? 'text-gray-900' : 'text-gray-400'
-                                }`}>
-                                    {step.label}
-                                </p>
-                                {isCurrent && (
-                                    <p className="text-xs text-solar font-medium mt-0.5 flex items-center gap-1">
-                                        <Clock className="h-3 w-3" /> Current Status
+                            <div className="flex-1">
+                                <div className="flex justify-between items-baseline">
+                                    <p className={`text-sm font-bold ${isComplete ? 'text-gray-900' : 'text-gray-400'}`}>
+                                        {step.label}
+                                    </p>
+                                    {timestamp && (
+                                        <span className="text-[10px] text-gray-400 font-mono">
+                                            {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {timestamp && (
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        {new Date(timestamp).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
                                 )}
-                                {step.key === 'assigned' && ticket.assigned_technician_id && isComplete && (
-                                    <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                        <User className="h-3 w-3" /> Technician assigned
+
+                                {isCurrent && (
+                                    <p className="text-xs text-solar font-bold mt-1 flex items-center gap-1">
+                                        <Clock className="h-3 w-3 animate-pulse" /> Active Stage
                                     </p>
                                 )}
                             </div>
@@ -93,17 +135,6 @@ export function TicketTimeline({ ticket }) {
                     );
                 })}
             </div>
-
-            {/* ETA Card */}
-            {ticket.estimated_resolution_hours && !['resolved', 'closed', 'completed'].includes(currentStatus) && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    <div>
-                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Estimated Resolution</p>
-                        <p className="text-sm font-bold text-blue-900">{ticket.estimated_resolution_hours} hours</p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

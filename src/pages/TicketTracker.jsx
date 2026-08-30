@@ -14,7 +14,7 @@ import { useToast } from '../context/ToastContext';
 import { complaintService } from '../services/complaintService';
 
 const statusFilters = [
-    { value: 'all', label: 'All' },
+    { value: 'all', label: 'All Tickets' },
     { value: 'open', label: 'Open' },
     { value: 'assigned', label: 'Assigned' },
     { value: 'in_progress', label: 'In Progress' },
@@ -223,44 +223,25 @@ export default function TicketTracker() {
             <Header title="My Tickets" />
 
             <div className="px-4 space-y-4 pt-2">
-                {/* Stats Cards */}
-                {stats && (
-                    <div className="grid grid-cols-4 gap-2">
-                        {[
-                            { label: 'Total', value: stats.total, color: 'text-gray-900 bg-gray-50 border-gray-200' },
-                            { label: 'Open', value: stats.open, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                            { label: 'Resolved', value: stats.resolved, color: 'text-green-600 bg-green-50 border-green-200' },
-                            { label: 'Escalated', value: stats.escalated, color: 'text-red-600 bg-red-50 border-red-200' },
-                        ].map((stat, i) => (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                className={`rounded-xl border p-2.5 text-center ${stat.color}`}
-                            >
-                                <p className="text-xl font-black">{stat.value}</p>
-                                <p className="text-[9px] font-bold uppercase tracking-wider opacity-70">{stat.label}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
 
-                {/* Status Filter */}
-                <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
-                    {statusFilters.map((filter) => (
-                        <button
-                            key={filter.value}
-                            onClick={() => setActiveFilter(filter.value)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                                activeFilter === filter.value
-                                    ? 'bg-solar text-white shadow-sm'
-                                    : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
-                            }`}
+
+                {/* Compact Right-Aligned Filter Dropdown */}
+                <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500">Service Tickets</span>
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm hover:border-solar/40 transition-all">
+                        <Filter className="w-3.5 h-3.5 text-solar shrink-0" />
+                        <select
+                            value={activeFilter}
+                            onChange={(e) => setActiveFilter(e.target.value)}
+                            className="text-xs font-bold bg-transparent text-gray-700 outline-none cursor-pointer uppercase tracking-wider pr-1"
                         >
-                            {filter.label}
-                        </button>
-                    ))}
+                            {statusFilters.map((filter) => (
+                                <option key={filter.value} value={filter.value}>
+                                    {filter.label.toUpperCase()}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Ticket List */}

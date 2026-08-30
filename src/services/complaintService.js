@@ -69,13 +69,20 @@ export const complaintService = {
             .select(`
                 *,
                 profiles!customer_id(name, phone, address),
+                technician:profiles!assigned_technician_id(id, name, phone, avatar_url),
                 solar_systems(capacity_kw),
                 customer_feedback(rating, review_text)
             `)
             .eq('customer_id', userId);
 
         if (filters.status && filters.status !== 'all') {
-            query = query.eq('status', filters.status);
+            if (filters.status === 'open') {
+                query = query.in('status', ['open', 'raised']);
+            } else if (filters.status === 'resolved') {
+                query = query.in('status', ['resolved', 'completed', 'closed']);
+            } else {
+                query = query.eq('status', filters.status);
+            }
         }
         if (filters.category && filters.category !== 'all') {
             query = query.eq('category', filters.category);
